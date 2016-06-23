@@ -20,8 +20,8 @@
 		"orpheus/orpheus-core" : "dev-master",
 		"orpheus/orpheus-hook" : "dev-master",
 		"orpheus/orpheus-cache" : "dev-master",
-		"orpheus/orpheus-sqladapter" : "dev-master",
 		"orpheus/orpheus-yaml" : "dev-master",
+		"orpheus/orpheus-sqladapter" : "dev-master",
 		"orpheus/orpheus-rendering" : "dev-master",
 		"orpheus/orpheus-inputcontroller" : "dev-master",
 		"orpheus/orpheus-publisher" : "dev-master"
