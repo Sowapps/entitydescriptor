@@ -2,12 +2,6 @@
 /* Loader File for the Entity Descriptor sources
  */
 
-// addAutoload('EntityDescriptor',					'entitydescriptor/EntityDescriptor');
-// addAutoload('TypeDescriptor',					'entitydescriptor/TypeDescriptor');
-// addAutoload('FieldDescriptor',					'entitydescriptor/FieldDescriptor');
-
-// addAutoload('PermanentEntity',					'entitydescriptor/PermanentEntity');
-
 // Form Things
 
 /** 
