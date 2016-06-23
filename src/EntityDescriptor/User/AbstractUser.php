@@ -2,8 +2,8 @@
 namespace Orpheus\EntityDescriptor\User;
 
 use Orpheus\Config\Config;
-use Oprheus\EntityDescriptor\PermanentEntity;
-use Oprheus\Publisher\Exception\UnknownKeyException;
+use Orpheus\EntityDescriptor\PermanentEntity;
+use Orpheus\Publisher\Exception\UnknownKeyException;
 use Orpheus\SQLAdapter\SQLAdapter;
 
 /** The user class

@@ -1,9 +1,9 @@
 <?php
-namespace Oprheus\EntityDescriptor;
+namespace Orpheus\EntityDescriptor;
 
 use Orpheus\Cache\FSCache;
 use Orpheus\Config\YAML\YAML;
-use Oprheus\Publisher\Exception\InvalidFieldException;
+use Orpheus\Publisher\Exception\InvalidFieldException;
 use \Exception;
 use Orpheus\Publisher\Util\SlugGenerator;
 

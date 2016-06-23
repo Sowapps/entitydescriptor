@@ -1,7 +1,7 @@
 <?php
-namespace Oprheus\EntityDescriptor\SQLGenerator;
+namespace Orpheus\EntityDescriptor\SQLGenerator;
 
-use Oprheus\EntityDescriptor\EntityDescriptor;
+use Orpheus\EntityDescriptor\EntityDescriptor;
 
 // MySQL Generator
 

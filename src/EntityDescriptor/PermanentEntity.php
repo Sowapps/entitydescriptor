@@ -1,5 +1,5 @@
 <?php
-namespace Oprheus\EntityDescriptor;
+namespace Orpheus\EntityDescriptor;
 
 use Orpheus\Publisher\PermanentObject\PermanentObject;
 

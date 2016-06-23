@@ -1,5 +1,5 @@
 <?php
-namespace Oprheus\EntityDescriptor;
+namespace Orpheus\EntityDescriptor;
 
 /**
  * The lang generator class is used to generate lang file from an entity descriptor
