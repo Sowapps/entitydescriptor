@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "edb32712fcf13395fafd245c0a9c9e11",
-    "content-hash": "27925285f06ab1b75f83075fd5a1f2d1",
+    "hash": "2dda0232618a868e83d1f5d9ee754dfa",
+    "content-hash": "93be1be8c3b6ac8c7356ca543b5ef342",
     "packages": [
         {
             "name": "orpheus/orpheus-cache",
@@ -196,12 +196,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Sowapps/orpheus-publisher.git",
-                "reference": "8b9ba5421fe8480741d3a5822465685370ced046"
+                "reference": "e601474e51f3463fe72dd137fd8b1170326f5ebc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Sowapps/orpheus-publisher/zipball/8b9ba5421fe8480741d3a5822465685370ced046",
-                "reference": "8b9ba5421fe8480741d3a5822465685370ced046",
+                "url": "https://api.github.com/repos/Sowapps/orpheus-publisher/zipball/e601474e51f3463fe72dd137fd8b1170326f5ebc",
+                "reference": "e601474e51f3463fe72dd137fd8b1170326f5ebc",
                 "shasum": ""
             },
             "require": {
@@ -242,7 +242,7 @@
                 "persistent",
                 "publisher"
             ],
-            "time": "2016-06-23 14:19:23"
+            "time": "2016-06-23 16:11:53"
         },
         {
             "name": "orpheus/orpheus-rendering",
@@ -296,12 +296,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Sowapps/orpheus-sqladapter.git",
-                "reference": "31afea746e1857c32517c4c808c7632b0a959c68"
+                "reference": "78219eeb4574f8c43a279bf99348db19bdba1dfb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Sowapps/orpheus-sqladapter/zipball/31afea746e1857c32517c4c808c7632b0a959c68",
-                "reference": "31afea746e1857c32517c4c808c7632b0a959c68",
+                "url": "https://api.github.com/repos/Sowapps/orpheus-sqladapter/zipball/78219eeb4574f8c43a279bf99348db19bdba1dfb",
+                "reference": "78219eeb4574f8c43a279bf99348db19bdba1dfb",
                 "shasum": ""
             },
             "require": {
@@ -337,7 +337,7 @@
                 "query",
                 "sql"
             ],
-            "time": "2016-06-23 15:58:33"
+            "time": "2016-06-23 16:12:28"
         },
         {
             "name": "orpheus/orpheus-yaml",
@@ -390,8 +390,8 @@
         "orpheus/orpheus-core": 20,
         "orpheus/orpheus-hook": 20,
         "orpheus/orpheus-cache": 20,
-        "orpheus/orpheus-sqladapter": 20,
         "orpheus/orpheus-yaml": 20,
+        "orpheus/orpheus-sqladapter": 20,
         "orpheus/orpheus-rendering": 20,
         "orpheus/orpheus-inputcontroller": 20,
         "orpheus/orpheus-publisher": 20
