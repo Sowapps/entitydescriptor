@@ -84,7 +84,8 @@ class EntityDescriptor {
 			// If file is corrupted (version mismatch ?)
 			$cache->reset();
 		}
-
+		// Unable to get from cache, building new one
+		
 		$conf = YAML::build($descriptorPath, true);
 // 		debug('Fields conf of '.$name, $conf->fields);
 		if( empty($conf->fields) ) {
