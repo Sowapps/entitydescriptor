@@ -8,5 +8,10 @@ namespace Orpheus\EntityDescriptor\User;
  */
 class User extends AbstractUser {
 	
+	// Final attributes
+	protected static $fields	= null;
+	protected static $validator	= null;
+	protected static $domain	= null;
+	
 }
 User::init();

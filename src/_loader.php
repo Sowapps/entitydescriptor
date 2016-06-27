@@ -1,6 +1,6 @@
 <?php
 use Orpheus\InputController\HTTPController\HTTPRoute;
-use Orpheus\EntityDescriptor\User\User;
+use Orpheus\EntityDescriptor\User\AbstractUser;
 
 /* Loader File for the Entity Descriptor sources
  */
@@ -31,5 +31,5 @@ HTTPRoute::registerAccessRestriction('role', function($route, $options) {
 	if( !is_string($options) ) {
 		throw new Exception('Invalid route access restriction option in routes config, allow string only');
 	}
-	return User::loggedCanAccessToRoute($route, $options);
+	return AbstractUser::loggedCanAccessToRoute($route, $options);
 });
