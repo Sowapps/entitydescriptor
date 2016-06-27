@@ -68,13 +68,21 @@ class EntityDescriptor {
 	 * @return EntityDescriptor
 	 */
 	public static function load($name, $class=null) {
-		$descriptorPath	= ENTITY_DESCRIPTOR_CONFIG_PATH.$name;
-		$cache	= new FSCache(self::DESCRIPTORCLASS, $name, filemtime(YAML::getFilePath($descriptorPath)));
+		$descriptorPath = ENTITY_DESCRIPTOR_CONFIG_PATH.$name;
+		$cache = new FSCache(self::DESCRIPTORCLASS, $name, filemtime(YAML::getFilePath($descriptorPath)));
 		
 		// Comment when editing class and entity field types
 		$descriptor	= null;
-		if( !defined('ENTITY_ALWAYS_RELOAD') && $cache->get($descriptor) && isset($descriptor->version) && $descriptor->version==self::VERSION ) {
-			return $descriptor;
+		try {
+			if( !defined('ENTITY_ALWAYS_RELOAD')
+					&& $cache->get($descriptor)
+					&& isset($descriptor->version)
+					&& $descriptor->version==self::VERSION ) {
+				return $descriptor;
+			}
+		} catch( Exception $e ) {
+			// If file is corrupted (version mismatch ?)
+			$cache->reset();
 		}
 
 		$conf = YAML::build($descriptorPath, true);
