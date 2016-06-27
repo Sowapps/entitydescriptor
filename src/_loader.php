@@ -1,4 +1,7 @@
 <?php
+use Orpheus\InputController\HTTPController\HTTPRoute;
+use Orpheus\EntityDescriptor\User\User;
+
 /* Loader File for the Entity Descriptor sources
  */
 
@@ -20,3 +23,13 @@ function getField($fieldPath, $class=null) {
 	}
 	return $class::getField($fieldPathArr[count($fieldPathArr)-1]);
 }
+
+// TODO: Improve HTTPRoute::registerAccessRestriction
+// Require orpheus-inputcontroller for this feature
+// Maybe we could let the core manager the access restrictions
+HTTPRoute::registerAccessRestriction('role', function($route, $options) {
+	if( !is_string($options) ) {
+		throw new Exception('Invalid route access restriction option in routes config, allow string only');
+	}
+	return User::loggedCanAccessToRoute($route, $options);
+});
