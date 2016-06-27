@@ -388,7 +388,7 @@ abstract class AbstractUser extends PermanentEntity {
 		}
 // 		$access	= static::getAccessOf($module);
 // 		if( $access===NULL ) { return true; }
-		$accesslevel	= (int) $accesslevel;
+		$accesslevel = (int) $accesslevel;
 		return ( empty($user) && $accesslevel < 0 ) ||
 			( !empty($user) && $accesslevel >= 0 &&
 				$user instanceof User && $user->checkPerm($accesslevel));
@@ -441,7 +441,7 @@ abstract class AbstractUser extends PermanentEntity {
 			'output'	=> SQLAdapter::ARR_FIRST
 		));
 		if( !empty($user) ) {
-			if( $user['email'] == $data['email'] ) {
+			if( $user['email'] === $data['email'] ) {
 				static::throwException("emailAlreadyUsed");
 				
 			} else {
