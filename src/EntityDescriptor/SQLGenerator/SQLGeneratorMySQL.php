@@ -12,7 +12,7 @@ use Orpheus\EntityDescriptor\TypeDatetime;
 
 // MySQL Generator
 
-class SQLGeneratorMySQL extends SQLGenerator {
+class SQLGeneratorMySQL implements SQLGenerator {
 	public function getColumnInfosFromField($field) {
 		$TYPE = EntityDescriptor::getType($field->type);
 		$cType = '';
