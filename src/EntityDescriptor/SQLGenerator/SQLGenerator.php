@@ -16,6 +16,7 @@ interface SQLGenerator {
 	
 	public function getCreate(EntityDescriptor $ed);
 	
+	/*
 	protected function formatHTML_Command($string);
 	
 	protected function formatHTML_SubCommand($string);
@@ -27,4 +28,5 @@ interface SQLGenerator {
 	protected function formatHTML_Identifier($string);
 	
 	protected function formatHTML_InlineBlock($string, $class);
+	*/
 }
