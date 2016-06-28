@@ -382,7 +382,7 @@ abstract class AbstractUser extends PermanentEntity {
 	public static function loggedCanAccessToRoute($route, $accesslevel) {
 // 		global $USER;
 // 		debug('loggedCanAccessToRoute($route, '.$accesslevel.')', $route);
-		$user	= static::getLoggedUser();
+		$user = static::getLoggedUser();
 		if( !ctype_digit($accesslevel) ) {
 			$accesslevel = static::getRoleAccesslevel($accesslevel);
 		}
@@ -391,7 +391,7 @@ abstract class AbstractUser extends PermanentEntity {
 		$accesslevel = (int) $accesslevel;
 		return ( empty($user) && $accesslevel < 0 ) ||
 			( !empty($user) && $accesslevel >= 0 &&
-				$user instanceof User && $user->checkPerm($accesslevel));
+				$user instanceof AbstractUser && $user->checkPerm($accesslevel));
 	}
 	
 	public static function getAppRoles() {
