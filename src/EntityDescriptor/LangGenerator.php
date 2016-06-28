@@ -1,6 +1,9 @@
 <?php
 namespace Orpheus\EntityDescriptor;
 
+use Orpheus\Exception\UserException;
+use Orpheus\Publisher\Exception\InvalidFieldException;
+
 /**
  * The lang generator class is used to generate lang file from an entity descriptor
  * @author Florent
@@ -44,6 +47,8 @@ class LangGenerator {
 				$ed->validateFieldValue($field, $value);
 			} catch( InvalidFieldException $e ) {
 				$r[$e->getKey()] = $e;
+// 			} catch( UserException $e ) {
+// 				die('UserException not InvalidFieldException');
 			}
 		}
 		return $r;
