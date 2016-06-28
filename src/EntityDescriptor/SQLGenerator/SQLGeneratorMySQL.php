@@ -133,7 +133,7 @@ class SQLGeneratorMySQL implements SQLGenerator {
 			unset($fields, $f, $cc, $cf, $columns);
 			// Indexes
 			try {
-				$rawIndexes	= pdo_query('SHOW INDEX FROM '.SQLAdapter_MySQL::doEscapeIdentifier($ed->getName()), PDOFETCHALL);//|PDOERROR_MINOR
+				$rawIndexes	= pdo_query('SHOW INDEX FROM '.SQLAdapterMySQL::doEscapeIdentifier($ed->getName()), PDOFETCHALL);//|PDOERROR_MINOR
 				// 			text('Indexes of '.$ed->getName());
 				// 			text($rawIndexes);
 				$indexes	= $ed->getIndexes();
@@ -141,7 +141,7 @@ class SQLGeneratorMySQL implements SQLGenerator {
 				$cIndexes	= array();
 				foreach( $rawIndexes as $ci ) {
 					$ci = (object) $ci;
-					if( $ci->Key_name==='PRIMARY' ) { continue; }
+					if( $ci->Key_name === 'PRIMARY' ) { continue; }
 					if( !isset($cIndexes[$ci->Key_name]) ) {
 						$type		= 'INDEX';
 						if( !$ci->Non_unique ) {
