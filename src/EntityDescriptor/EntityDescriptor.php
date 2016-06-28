@@ -826,7 +826,7 @@ class TypeObject extends TypeString {
 				throw new Exception('Field '.$field.'\'s value should be an instance of '.$class.', got '.get_class($value));
 			}
 // 			if( array_key_exists('Serializable', class_implements($class, true)) ) {
-			if( $value instanceof Serializable ) {
+			if( $value instanceof \Serializable ) {
 // 				$obj = new $class();
 				return $value->serialize();
 			} else {

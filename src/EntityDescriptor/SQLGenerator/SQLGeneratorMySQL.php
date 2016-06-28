@@ -4,6 +4,11 @@ namespace Orpheus\EntityDescriptor\SQLGenerator;
 use Orpheus\EntityDescriptor\EntityDescriptor;
 use Orpheus\Exception\UserException;
 use Orpheus\SQLAdapter\SQLAdapterMySQL;
+use Orpheus\EntityDescriptor\TypeString;
+use Orpheus\EntityDescriptor\TypeNumber;
+use Orpheus\EntityDescriptor\TypePassword;
+use Orpheus\EntityDescriptor\TypeDate;
+use Orpheus\EntityDescriptor\TypeDatetime;
 
 // MySQL Generator
 

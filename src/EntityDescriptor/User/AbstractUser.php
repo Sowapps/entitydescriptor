@@ -162,7 +162,7 @@ abstract class AbstractUser extends PermanentEntity {
 	 */
 	public function canDo($action, $object=null) {
 // 		global $USER_CLASS;
-		return $this->equals($object) || ( $this->checkPerm($action) && ( !($object instanceof User) || $this->canAlter($object) ) );
+		return $this->equals($object) || ( $this->checkPerm($action) && ( !($object instanceof AbstractUser) || $this->canAlter($object) ) );
 	}
 	
 	// *** METHODES STATIQUES ***
@@ -365,20 +365,6 @@ abstract class AbstractUser extends PermanentEntity {
 	 * 
 	 * Checks if this user can access to $module.
 	 */
-	/*
-	public static function canAccess($module) {
-		/* @var $USER AbstractUser * /
-// 		global $USER, $USER_CLASS;
-		global $USER;
-		if( !CHECK_MODULE_ACCESS ) { return true; }
-		$access	= static::getAccessOf($module);
-		if( $access===NULL ) { return true; }
-		$access	= (int) $access;
-		return ( empty($USER) && $access < 0 ) ||
-			( !empty($USER) && $access >= 0 &&
-				$USER instanceof User && $USER->checkPerm($access));
-	}
-	*/
 	public static function loggedCanAccessToRoute($route, $accesslevel) {
 // 		global $USER;
 // 		debug('loggedCanAccessToRoute($route, '.$accesslevel.')', $route);
@@ -417,7 +403,6 @@ abstract class AbstractUser extends PermanentEntity {
 	 */
 	public static function loggedCanDo($action, AbstractUser $object=null) {
 		global $USER;
-		//$USER instanceof USER_CLASS && 
 		return !empty($USER) && $USER->canDo($action, $object);
 	}
 	
