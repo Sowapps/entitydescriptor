@@ -160,7 +160,7 @@ abstract class PermanentEntity extends PermanentObject {
 		$entities = array();
 		foreach( static::$knownEntities as $class => &$state ) {
 			if( $state == null ) {
-				$state	= class_exists($class, true) && is_subclass_of($class, 'PermanentEntity');
+				$state	= class_exists($class, true) && is_subclass_of($class, 'Orpheus\EntityDescriptor\PermanentEntity');
 			}
 			if( $state == true ) {
 				$entities[] = $class;
