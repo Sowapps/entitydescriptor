@@ -9,6 +9,7 @@ use Orpheus\EntityDescriptor\TypeNumber;
 use Orpheus\EntityDescriptor\TypePassword;
 use Orpheus\EntityDescriptor\TypeDate;
 use Orpheus\EntityDescriptor\TypeDatetime;
+use Orpheus\SQLAdapter\Exception\SQLException;
 
 // MySQL Generator
 
@@ -104,10 +105,10 @@ class SQLGeneratorMySQL implements SQLGenerator {
 	
 	public function matchEntity(EntityDescriptor $ed) {
 		try {
-			$columns	= pdo_query('SHOW COLUMNS FROM '.SQLAdapterMySQL::doEscapeIdentifier($ed->getName()), PDOFETCHALL);//|PDOERROR_MINOR
+			$columns = pdo_query('SHOW COLUMNS FROM '.SQLAdapterMySQL::doEscapeIdentifier($ed->getName()), PDOFETCHALL);//|PDOERROR_MINOR
 			// Fields
-			$fields	= $ed->getFields();
-			$alter	= '';
+			$fields = $ed->getFields();
+			$alter = '';
 			foreach( $columns as $cc ) {
 				$cc	= (object) $cc;
 				$cf = array( 'name'=>$cc->Field, 'type'=>strtoupper($cc->Type), 'nullable'=>$cc->Null=='YES',
