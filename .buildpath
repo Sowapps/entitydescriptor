@@ -9,5 +9,6 @@
 	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
 	<buildpathentry combineaccessrules="false" kind="prj" path="/Orpheus YAML"/>
 	<buildpathentry combineaccessrules="false" kind="prj" path="/Orpheus Hook"/>
+	<buildpathentry combineaccessrules="false" kind="prj" path="/Orpheus WebTools"/>
 	<buildpathentry combineaccessrules="false" kind="prj" path="/Orpheus Input Controller"/>
 </buildpath>

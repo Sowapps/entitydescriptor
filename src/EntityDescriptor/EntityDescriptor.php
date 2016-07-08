@@ -5,7 +5,7 @@ use Orpheus\Cache\FSCache;
 use Orpheus\Config\YAML\YAML;
 use Orpheus\Publisher\Exception\InvalidFieldException;
 use \Exception;
-use Orpheus\Publisher\Util\SlugGenerator;
+use Orpheus\Publisher\SlugGenerator;
 
 /** A class to describe an entity
  * 
@@ -453,7 +453,7 @@ class TypeDate extends TypeDescriptor {
 		// FR Only for now - Should use user language
 		if( is_id($value) ) { return; }
 		$time = null;
-		if( !is_date($value, false, $time) && !is_date($value, false, $time, 'SQL') ) {
+		if( !is_date($value, false, $time) && !is_date($value, false, $time, DATE_FORMAT_SQL) && !is_date($value, true, $time, DATE_FORMAT_GNU) ) {
 			throw new FE('notDate');
 		}
 		// Format to timestamp
@@ -474,20 +474,21 @@ class TypeDatetime extends TypeDescriptor {
 	
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		if( !empty($input[$field->name.'_time']) ) {
-			$value	.= ' '.$input[$field->name.'_time'];//Allow HH:MM:SS and HH:MM
+			$value .= ' '.$input[$field->name.'_time'];//Allow HH:MM:SS and HH:MM
 		}
 		// FR Only for now - Should use user language
 		if( is_id($value) ) { return; }
 		$time = null;
-		if( !is_date($value, true, $time) && !is_date($value, true, $time, 'SQL') ) {
+		// TODO: Find a better way to check all formats
+		if( !is_date($value, true, $time) && !is_date($value, true, $time, DATE_FORMAT_SQL) && !is_date($value, true, $time, DATE_FORMAT_GNU) ) {
 			throw new FE('notDatetime');
 		}
 		// Format to timestamp
-		$value	= $time;
+		$value = $time;
 	}
 	
 	public function format(FieldDescriptor $field, &$value) {
-		$value	= sqlDatetime($value);
+		$value = sqlDatetime($value);
 	}
 }
 EntityDescriptor::registerType(new TypeDatetime());
