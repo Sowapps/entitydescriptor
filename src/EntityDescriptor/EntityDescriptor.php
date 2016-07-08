@@ -453,7 +453,8 @@ class TypeDate extends TypeDescriptor {
 		// FR Only for now - Should use user language
 		if( is_id($value) ) { return; }
 		$time = null;
-		if( !is_date($value, false, $time) && !is_date($value, false, $time, DATE_FORMAT_SQL) && !is_date($value, true, $time, DATE_FORMAT_GNU) ) {
+		if( !is_date($value, false, $time) ) {
+// 		if( !is_date($value, false, $time) && !is_date($value, false, $time, DATE_FORMAT_SQL) && !is_date($value, true, $time, DATE_FORMAT_GNU) ) {
 			throw new FE('notDate');
 		}
 		// Format to timestamp
@@ -480,7 +481,8 @@ class TypeDatetime extends TypeDescriptor {
 		if( is_id($value) ) { return; }
 		$time = null;
 		// TODO: Find a better way to check all formats
-		if( !is_date($value, true, $time) && !is_date($value, true, $time, DATE_FORMAT_SQL) && !is_date($value, true, $time, DATE_FORMAT_GNU) ) {
+		if( !is_date($value, true, $time) ) {
+// 		if( !is_date($value, true, $time) && !is_date($value, true, $time, DATE_FORMAT_SQL) && !is_date($value, true, $time, DATE_FORMAT_GNU) ) {
 			throw new FE('notDatetime');
 		}
 		// Format to timestamp
