@@ -54,12 +54,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Sowapps/orpheus-core.git",
-                "reference": "08bb6fac76f4191409b965db196d82bf7d756d6d"
+                "reference": "decf1c6f8689df772b44335cfef77b356d3f6475"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Sowapps/orpheus-core/zipball/08bb6fac76f4191409b965db196d82bf7d756d6d",
-                "reference": "08bb6fac76f4191409b965db196d82bf7d756d6d",
+                "url": "https://api.github.com/repos/Sowapps/orpheus-core/zipball/decf1c6f8689df772b44335cfef77b356d3f6475",
+                "reference": "decf1c6f8689df772b44335cfef77b356d3f6475",
                 "shasum": ""
             },
             "require": {
@@ -91,7 +91,7 @@
                 "core",
                 "orpheus"
             ],
-            "time": "2016-07-08 06:57:14"
+            "time": "2016-07-08 07:23:28"
         },
         {
             "name": "orpheus/orpheus-hook",
