@@ -2,8 +2,14 @@
 use Orpheus\InputController\HTTPController\HTTPRoute;
 use Orpheus\EntityDescriptor\User\AbstractUser;
 
-/* Loader File for the Entity Descriptor sources
+/*
+ * Loader File for the Entity Descriptor sources
  */
+
+if( !defined('ORPHEUSPATH') ) {
+	// Do not load in a non-orpheus environment
+	return;
+}
 
 // Form Things
 
