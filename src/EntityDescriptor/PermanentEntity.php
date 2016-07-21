@@ -1,4 +1,12 @@
 <?php
+/**
+ * The Permanent Entity class
+ *
+ * Permanent entity objects are Permanent Object using entity descriptor
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ */
+
 namespace Orpheus\EntityDescriptor;
 
 use Orpheus\Publisher\PermanentObject\PermanentObject;
