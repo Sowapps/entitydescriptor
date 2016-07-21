@@ -9,6 +9,7 @@ abstract class TypeDescriptor {
 	
 	/**
 	 * Get the type name
+	 * 
 	 * @return string the type name
 	 */
 	public function getName() {
@@ -17,6 +18,7 @@ abstract class TypeDescriptor {
 
 	/**
 	 * Get true if field is writable
+	 * 
 	 * @return boolean
 	 */
 	public function isWritable() {
@@ -25,6 +27,7 @@ abstract class TypeDescriptor {
 
 	/**
 	 * Get true if field is nullable
+	 * 
 	 * @return boolean
 	 */
 	public function isNullable() {
@@ -33,6 +36,8 @@ abstract class TypeDescriptor {
 
 	/**
 	 * Get the html input attributes string for the given args
+	 * 
+	 * @param array $args
 	 * @return string
 	 */
 	public function htmlInputAttr($args) {
@@ -41,6 +46,8 @@ abstract class TypeDescriptor {
 
 	/**
 	 * Get the html input attributes array for the given Field descriptor
+	 * 
+	 * @param FieldDescriptor $Field
 	 * @return string[]
 	 */
 	public function getHTMLInputAttr($Field) {
@@ -49,6 +56,8 @@ abstract class TypeDescriptor {
 
 	/**
 	 * Get true if we consider null an empty input string
+	 * 
+	 * @param string $field
 	 * @return boolean
 	 */
 	public function emptyIsNull($field) {
@@ -57,6 +66,7 @@ abstract class TypeDescriptor {
 	
 	/**
 	 * Parse args from field declaration
+	 * 
 	 * @param string[] $args Arguments
 	 * @return stdClass
 	 */

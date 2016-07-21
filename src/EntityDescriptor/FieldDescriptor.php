@@ -57,7 +57,9 @@ class FieldDescriptor {
 	// 		return $this->nullable;
 	// 	}
 	
-	/** Get the type of the field
+	/**
+	 * Get the type of the field
+	 * 
 	 * @param TypeDescriptor $type Optional output parameter for the type
 	 * @return TypeDescriptor
 	 */
@@ -65,7 +67,9 @@ class FieldDescriptor {
 		return EntityDescriptor::getType($this->type, $type);
 	}
 	
-	/** Get the default value (if this field is NULL)
+	/**
+	 * Get the default value (if this field is NULL)
+	 * 
 	 * @return string|integer
 	 */
 	public function getDefault() {
@@ -80,16 +84,17 @@ class FieldDescriptor {
 	
 	/** 
 	 * Parse field type configuration from file string
-	 * @param	$field string
-	 * @param	$desc string|string[]
+	 * 
+	 * @param string $fieldName
+	 * @param string|string[] $desc
 	 * @return	FieldDescriptor The parsed field descriptor
 	 */
 	public static function parseType($fieldName, $desc) {
 		if( is_array($desc) ) {
-			$typeDesc				= $desc['type'];
+			$typeDesc = $desc['type'];
 		} else {
-			$typeDesc				= $desc;
-			$desc					= array();
+			$typeDesc = $desc;
+			$desc = array();
 		}
 // 		debug('parseType - '.$field, $typeDesc);
 		$parse					= EntityDescriptor::parseType($fieldName, $typeDesc);
