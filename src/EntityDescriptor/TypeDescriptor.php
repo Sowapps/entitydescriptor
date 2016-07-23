@@ -74,10 +74,10 @@ abstract class TypeDescriptor {
 	/**
 	 * Get the html input attributes array for the given Field descriptor
 	 * 
-	 * @param FieldDescriptor $Field
+	 * @param FieldDescriptor $field
 	 * @return string[]
 	 */
-	public function getHTMLInputAttr($Field) {
+	public function getHTMLInputAttr($field) {
 		return array();
 	}
 
