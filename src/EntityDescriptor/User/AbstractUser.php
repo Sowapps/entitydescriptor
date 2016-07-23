@@ -20,9 +20,29 @@ abstract class AbstractUser extends PermanentEntity {
 	protected static $table		= 'user';
 	
 	// Final attributes
-	protected static $fields	= null;
-	protected static $validator	= null;
-	protected static $domain	= null;
+	
+	/**
+	 * The fields of this object
+	 * 
+	 * @var array
+	 */
+	protected static $fields			= array();
+	
+	/**
+	 * The validator
+	 * The default one is an array system.
+	 * 
+	 * @var array
+	 */
+	protected static $validator			= array();
+	
+	/**
+	 * The domain of this class
+	 * Used as default for translations.
+	 * 
+	 * @var unknown
+	 */
+	protected static $domain			= null;
 	
 	const NOT_LOGGED	= 0;
 	const IS_LOGGED		= 1;
@@ -31,16 +51,19 @@ abstract class AbstractUser extends PermanentEntity {
 
 	// *** METHODES SURCHARGEES ***
 	
-	/** Magic string conversion
-	 * @return The string value of this object.
+	/**
+	 * Magic string conversion
+	 * 
+	 * @return The string value of this object
+	 * 
 	 * The string value is the contents of the publication.
-	*/
+	 */
 	public function __toString() {
 		return $this->fullname;
 	}
 	
-	/** Method when this object is unserialized.
-	 * 
+	/**
+	 * Magic method when this object is unserialized
 	 */
 	public function __wakeup() {
 		if( $this->login ) {
@@ -48,6 +71,9 @@ abstract class AbstractUser extends PermanentEntity {
 		}
 	}
 	
+	/**
+	 * Callback when user is connected
+	 */
 	public function onConnected() {
 		
 	}

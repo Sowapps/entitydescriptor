@@ -87,7 +87,6 @@ class EntityDescriptor {
 		// Unable to get from cache, building new one
 		
 		$conf = YAML::build($descriptorPath, true);
-// 		debug('Fields conf of '.$name, $conf->fields);
 		if( empty($conf->fields) ) {
 			throw new \Exception('Descriptor file for "'.$name.'" is corrupted, empty or not found, there is no field.');
 		}
@@ -106,15 +105,14 @@ class EntityDescriptor {
 				}
 			}
 		}
-		$IDField	= $class ? $class::getIDField() : self::IDFIELD;
-// 		$fields[$IDField]	= (object) array('name'=>$IDField, 'type'=>'ref', 'args'=>(object)array('decimals'=>0, 'min'=>0, 'max'=>4294967295), 'writable'=>false, 'nullable'=>false);
-		$fields[$IDField]	= FieldDescriptor::buildIDField($IDField);
+		$IDField = $class ? $class::getIDField() : self::IDFIELD;
+		$fields[$IDField] = FieldDescriptor::buildIDField($IDField);
 		foreach( $conf->fields as $fieldName => $fieldInfos ) {
 			$fields[$fieldName]	= FieldDescriptor::parseType($fieldName, $fieldInfos);
 		}
 
 		//      Indexes
-		$indexes	= array();
+		$indexes = array();
 		if( !empty($conf->indexes) ) {
 			foreach( $conf->indexes as $index ) {
 				$iType		= static::parseType(null, $index);

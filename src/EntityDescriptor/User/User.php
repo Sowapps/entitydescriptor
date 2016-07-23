@@ -1,4 +1,8 @@
 <?php
+/**
+ * User
+ */
+
 namespace Orpheus\EntityDescriptor\User;
 
 /**
@@ -9,9 +13,29 @@ namespace Orpheus\EntityDescriptor\User;
 class User extends AbstractUser {
 	
 	// Final attributes
-	protected static $fields	= null;
-	protected static $validator	= null;
-	protected static $domain	= null;
+	
+	/**
+	 * The fields of this object
+	 * 
+	 * @var array
+	 */
+	protected static $fields			= array();
+	
+	/**
+	 * The validator
+	 * The default one is an array system.
+	 * 
+	 * @var array
+	 */
+	protected static $validator			= array();
+	
+	/**
+	 * The domain of this class
+	 * Used as default for translations.
+	 * 
+	 * @var unknown
+	 */
+	protected static $domain			= null;
 	
 }
 User::init();

@@ -1,34 +1,36 @@
 <?php
+/**
+ * LangGenerator
+ */
+
 namespace Orpheus\EntityDescriptor;
 
-use Orpheus\Exception\UserException;
 use Orpheus\Publisher\Exception\InvalidFieldException;
 
 /**
  * The lang generator class is used to generate lang file from an entity descriptor
- * @author Florent
+ * 
+ * @author Florent Hazard <contact@sowapps.com>
  *
  */
 class LangGenerator {
 	
+	/**
+	 * Some values to test if field is valid
+	 * 
+	 * @var array
+	 */
 	public static $testedValues = array(null, '', '0', 'string', '1.997758887755445', '-974455277432344345647573654743352', '974455277432344345647573654743352');
-	
-// 	public function generate($ed) {
-// 		$rows = '';
-// 		foreach( $ed->getFields() as $field ) {
-// 			$rows .= $this->getErrorsForField($ed, $field);
-// 		}
-// 	}
 
 	/**
 	 * Get all exception string this entity could generate
+	 * 
 	 * @param	EntityDescriptor $ed
 	 * @return	InvalidFieldException[] A set of exception
 	 */
 	public function getRows(EntityDescriptor $ed) {
 		$r = array();
 		foreach( $ed->getFieldsName() as $field ) {
-// 			$r = array_merge($r, $this->getErrorsForField($ed, $field));
 			$r += $this->getErrorsForField($ed, $field);
 		}
 		return array_unique($r);
@@ -36,6 +38,7 @@ class LangGenerator {
 	
 	/**
 	 * Get all exception this field could generate
+	 * 
 	 * @param	EntityDescriptor $ed
 	 * @param	string $field
 	 * @return	InvalidFieldException[]
@@ -47,8 +50,6 @@ class LangGenerator {
 				$ed->validateFieldValue($field, $value);
 			} catch( InvalidFieldException $e ) {
 				$r[$e->getKey()] = $e;
-// 			} catch( UserException $e ) {
-// 				die('UserException not InvalidFieldException');
 			}
 		}
 		return $r;

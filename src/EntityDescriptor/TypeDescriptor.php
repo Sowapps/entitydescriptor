@@ -1,10 +1,37 @@
 <?php
+/**
+ * TypeDescriptor
+ */
+
 namespace Orpheus\EntityDescriptor;
 
+/**
+ * The TypeDescriptor class
+ * 
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 abstract class TypeDescriptor {
-
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name;
+	
+	/**
+	 * Is this type writable ?
+	 * 
+	 * @var boolean
+	 */
 	protected $writable;
+	
+	/**
+	 * Is this type nullable ?
+	 * 
+	 * @var boolean
+	 */
 	protected $nullable;
 	
 	/**

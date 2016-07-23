@@ -11,15 +11,33 @@ namespace Orpheus\EntityDescriptor;
 
 use Orpheus\Publisher\PermanentObject\PermanentObject;
 
-/** The permanent entity class
+/**
+ * The permanent entity class
+ * 
  * A permanent entity class that combine a PermanentObject with EntityDescriptor's features.
  */
 abstract class PermanentEntity extends PermanentObject {
 
-	//Attributes
+	/**
+	 * The table
+	 * 
+	 * @var string
+	 */
 	protected static $table				= null;
+	
+	/**
+	 * Editable fields, not used in this subclass
+	 * 
+	 * @var array
+	 * @deprecated
+	 */
 	protected static $editableFields	= null;
 	
+	/**
+	 * Entity classes
+	 * 
+	 * @var array
+	 */
 	protected static $entityClasses		= array();
 	
 	// Final class attributes, please inherits them
@@ -31,6 +49,7 @@ abstract class PermanentEntity extends PermanentObject {
 
 	/**
 	 * Get unix timestamp from the create_date field
+	 * 
 	 * @return int
 	 * @warning You can not use this function if there is no create_date field
 	 */
@@ -40,6 +59,7 @@ abstract class PermanentEntity extends PermanentObject {
 	
 	/**
 	 * Validate field value from the validator using this entity
+	 * 
 	 * @param string $field
 	 * @param mixed $value
 	 */
@@ -48,7 +68,8 @@ abstract class PermanentEntity extends PermanentObject {
 	}
 	
 	/**
-	 * Validate field value and set it.
+	 * Validate field value and set it
+	 * 
 	 * @param string $field
 	 * @param mixed $value
 	 */
@@ -59,6 +80,7 @@ abstract class PermanentEntity extends PermanentObject {
 	
 	/**
 	 * Try to load entity from an entity string and an id integer
+	 * 
 	 * @param string $entity
 	 * @param int $id
 	 */
@@ -66,14 +88,13 @@ abstract class PermanentEntity extends PermanentObject {
 		return $entity::load($id);
 	}
 
-	/** Initializes class - REQUIRED
+	/**
+	 * Initializes class - REQUIRED
 	 * Initializes entity class
 	 * You must call this method after the class declaration
 	 */
 	public static function init($isFinal=true) {
-// 		debug(static::getClass().'::init() ', debug_backtrace());
 		if( static::$validator ) {
-//			debug('static::$validator', static::$validator);
 			throw new \Exception('Class '.static::getClass().' with table '.static::$table.' is already initialized.');
 		}
 		if( static::$domain === NULL ) {
@@ -87,17 +108,25 @@ abstract class PermanentEntity extends PermanentObject {
 		}
 	}
 	
+	/**
+	 * Get entity instance by type and id
+	 * 
+	 * @param string $objType
+	 * @param string $objID
+	 * @return PermanentEntity
+	 */
 	public static function getEntityObject($objType, $objID=null) {
 		if( is_object($objType) ) {
 			$objID		= $objType->entity_id;
 			$objType	= $objType->entity_type;
 		}
-		$class	= isset(static::$entityClasses[$objType]) ? static::$entityClasses[$objType] : $objType;
+		$class = isset(static::$entityClasses[$objType]) ? static::$entityClasses[$objType] : $objType;
 		return $class::load($objID);
 	}
 	
 	/** 
 	 * Helper method to get whereclause string from an entity
+	 * 
 	 * @param string $prefix The prefix for fields, e.g "table." (with dot)
 	 * @return string
 	 * 
@@ -110,6 +139,7 @@ abstract class PermanentEntity extends PermanentObject {
 	
 	/**
 	 * Get field descriptor from field name
+	 * 
 	 * @param string $field
 	 * @return FieldDescriptor
 	 */
@@ -119,6 +149,7 @@ abstract class PermanentEntity extends PermanentObject {
 
 	/**
 	 * Get this entity name
+	 * 
 	 * @return string
 	 */
 	public static function getEntity() {
@@ -134,9 +165,7 @@ abstract class PermanentEntity extends PermanentObject {
 	 * @see PermanentObject::formatFieldValue()
 	 */
 	protected static function parseFieldValue($name, $value) {
-// 		debug("parseFieldValue($name, $value)");
 		$field	= static::$validator->getField($name);
-// 		debug('parseFieldValue - $field', $field);
 		if( $field ) {
 			$field->getType()->parseValue($field, $value);
 		}
@@ -159,11 +188,28 @@ abstract class PermanentEntity extends PermanentObject {
 		return parent::formatFieldValue($name, $value);
 	}
 	
+	/**
+	 * Known entities
+	 * 
+	 * @var array
+	 */
 	protected static $knownEntities	= array();
+	
+	/**
+	 * Register an entity
+	 * 
+	 * @param string $class
+	 */
 	public static function registerEntity($class) {
 		if( array_key_exists($class, static::$knownEntities) ) { continue; }
 		static::$knownEntities[$class] = null;
 	}
+	
+	/**
+	 * List all known entities
+	 * 
+	 * @return string[]
+	 */
 	public static function listKnownEntities() {
 		$entities = array();
 		foreach( static::$knownEntities as $class => &$state ) {

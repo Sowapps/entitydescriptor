@@ -1,18 +1,63 @@
 <?php
+/**
+ * FieldDescriptor
+ */
+
 namespace Orpheus\EntityDescriptor;
 
+/**
+ * The FieldDescriptor class
+ * 
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class FieldDescriptor {
-
+	
+	/**
+	 * The field name
+	 * 
+	 * @var string
+	 */
 	public $name;
+	
+	/**
+	 * The field type
+	 * 
+	 * @var string
+	 */
 	public $type;
+	
+	/**
+	 * The field arguments
+	 * 
+	 * @var array
+	 */
 	public $args;
+	
+	/**
+	 * The field's default value
+	 * 
+	 * @var mixed
+	 */
 	public $default;
+	
+	/**
+	 * Is this field writable ?
+	 * 
+	 * @var boolean
+	 */
 	public $writable;
+	
+	/**
+	 * Is this field nullable ?
+	 * 
+	 * @var boolean
+	 */
 	public $nullable;
-	/* Field : String name, TypeDescriptor type, Array args, default, writable, nullable */
 	
 	/** 
-	 * Constructs the Field Descriptor
+	 * Constructor
+	 * 
 	 * @param string $name
 	 * @param string $type
 	 */
@@ -23,6 +68,7 @@ class FieldDescriptor {
 	
 	/** 
 	 * Magic toString
+	 * 
 	 * @return string
 	 */
 	public function __toString() {
@@ -31,6 +77,7 @@ class FieldDescriptor {
 	
 	/** 
 	 * Get arg value for this field
+	 * 
 	 * @param	$key string The argument key
 	 * @return	string|integer|NULL The argument value
 	 */
@@ -38,24 +85,14 @@ class FieldDescriptor {
 		return isset($this->args->$key) ? $this->args->$key : null;
 	}
 	
-	/** Get the HTML input tag for this field
+	/**
+	 * Get the HTML input tag for this field
+	 * 
 	 * @return string
 	 */
 	public function getHTMLInputAttr() {
 		return $this->getType()->getHTMLInputAttr($this);
 	}
-	
-// 	public function getName() {
-// 		return $this->name;
-// 	}
-	
-// 	public function isWritable() {
-// 		return $this->writable;
-// 	}
-
-	// 	public function isNullable() {
-	// 		return $this->nullable;
-	// 	}
 	
 	/**
 	 * Get the type of the field
@@ -96,20 +133,26 @@ class FieldDescriptor {
 			$typeDesc = $desc;
 			$desc = array();
 		}
-// 		debug('parseType - '.$field, $typeDesc);
 		$parse					= EntityDescriptor::parseType($fieldName, $typeDesc);
+		
 		/* Field : String name, TypeDescriptor type, Array args, default, writable, nullable */
 		$field					= new static($fieldName, $parse->type);
 		$TYPE					= $field->getType();
 		$field->args			= $TYPE->parseArgs($parse->args);
 		$field->default			= $parse->default;
+		
 		// Type's default
 		$field->writable		= $TYPE->isWritable();
 		$field->nullable		= $TYPE->isNullable();
+		
 		// Default if no type's default
-		if( !isset($field->writable) ) { $field->writable = true; }
-		if( !isset($field->nullable) ) { $field->nullable = false; }
-		// 			text('Type nullable: '.b($field->nullable));
+		if( !isset($field->writable) ) {
+			$field->writable = true;
+		}
+		if( !isset($field->nullable) ) {
+			$field->nullable = false;
+		}
+		
 		// Field flags
 		if( isset($desc['writable']) ) {
 			$field->writable = !empty($desc['writable']);
@@ -125,17 +168,22 @@ class FieldDescriptor {
 		} else {
 			$field->nullable = in_array('nullable', $parse->flags);
 		}
-// 		debug('$field', $field);
 		return $field;
 	}
 	
+	/**
+	 * Build ID field for an entity
+	 * 
+	 * @param string $name
+	 * @return \Orpheus\EntityDescriptor\FieldDescriptor
+	 */
 	public static function buildIDField($name) {
-		$field					= new static($name, 'ref');
-		$TYPE					= $field->getType();
-		$field->args			= $TYPE->parseArgs(array());
-		$field->default			= null;
-		$field->writable		= false;
-		$field->nullable		= false;
+		$field				= new static($name, 'ref');
+		$TYPE				= $field->getType();
+		$field->args		= $TYPE->parseArgs(array());
+		$field->default		= null;
+		$field->writable	= false;
+		$field->nullable	= false;
 		return $field;
 	}
 }
