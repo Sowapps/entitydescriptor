@@ -1,10 +1,11 @@
 <?php
+/**
+ * Loader File for the Entity Descriptor sources
+ */
+
 use Orpheus\InputController\HTTPController\HTTPRoute;
 use Orpheus\EntityDescriptor\User\AbstractUser;
 
-/*
- * Loader File for the Entity Descriptor sources
- */
 
 if( !defined('ORPHEUSPATH') ) {
 	// Do not load in a non-orpheus environment
@@ -15,6 +16,7 @@ if( !defined('ORPHEUSPATH') ) {
 
 /** 
  * Get the field descriptor from a field path
+ * 
  * @param string $fieldPath
  * @param string $class
  * @return FieldDescriptor

@@ -1,4 +1,8 @@
 <?php
+/**
+ * SQLGeneratorMySQL
+ */
+
 namespace Orpheus\EntityDescriptor\SQLGenerator;
 
 use Orpheus\EntityDescriptor\EntityDescriptor;
@@ -11,9 +15,21 @@ use Orpheus\EntityDescriptor\TypeDate;
 use Orpheus\EntityDescriptor\TypeDatetime;
 use Orpheus\SQLAdapter\Exception\SQLException;
 
-// MySQL Generator
-
+/**
+ * The SQLGeneratorMySQL class
+ * 
+ * Use this class to generate entity's table SQL queries and check changes in structure
+ * 
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class SQLGeneratorMySQL implements SQLGenerator {
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::getColumnInfosFromField()
+	 */
 	public function getColumnInfosFromField($field) {
 		$TYPE = EntityDescriptor::getType($field->type);
 		$cType = '';
@@ -86,6 +102,11 @@ class SQLGeneratorMySQL implements SQLGenerator {
 		return $r;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::getColumnDefinition()
+	 */
 	public function getColumnDefinition($field, $withPK=true) {
 		// 	text('mysqlColumnDefinition()');
 		// 	text($field);
@@ -95,6 +116,11 @@ class SQLGeneratorMySQL implements SQLGenerator {
 			(!empty($field->autoIncrement) ? ' '.$this->formatHTML_ReservedWord('AUTO_INCREMENT') : '').(($withPK && !empty($field->primaryKey)) ? ' '.$this->formatHTML_ReservedWord('PRIMARY KEY') : '');
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::getIndexDefinition()
+	 */
 	public function getIndexDefinition($index) {
 		$fields = '';
 		foreach( $index->fields as $field ) {
@@ -103,6 +129,11 @@ class SQLGeneratorMySQL implements SQLGenerator {
 		return $this->formatHTML_ReservedWord($index->type).(!empty($index->name) ? ' '.$this->formatHTML_Identifier($index->name) : '').' ('.$fields.')';
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::matchEntity()
+	 */
 	public function matchEntity(EntityDescriptor $ed) {
 		try {
 			$columns = pdo_query('SHOW COLUMNS FROM '.SQLAdapterMySQL::doEscapeIdentifier($ed->getName()), PDOFETCHALL);//|PDOERROR_MINOR
@@ -135,8 +166,6 @@ class SQLGeneratorMySQL implements SQLGenerator {
 			// Indexes
 			try {
 				$rawIndexes	= pdo_query('SHOW INDEX FROM '.SQLAdapterMySQL::doEscapeIdentifier($ed->getName()), PDOFETCHALL);//|PDOERROR_MINOR
-				// 			text('Indexes of '.$ed->getName());
-				// 			text($rawIndexes);
 				$indexes	= $ed->getIndexes();
 				// Current indexes
 				$cIndexes	= array();
@@ -186,6 +215,11 @@ class SQLGeneratorMySQL implements SQLGenerator {
 		}
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::getCreate()
+	 */
 	public function getCreate(EntityDescriptor $ed) {
 		// 	text('mysqlCreate()');
 		// 	text($ed);
@@ -206,26 +240,64 @@ class SQLGeneratorMySQL implements SQLGenerator {
 ) '.$this->formatHTML_ReservedWord('ENGINE=MYISAM').' '.$this->formatHTML_ReservedWord('CHARACTER SET').' '.$this->formatHTML_Identifier('utf8').';</div>';
 	}
 	
+	/**
+	 * Format command into HTML
+	 * 
+	 * @param string $string
+	 * @return string
+	 */
 	protected function formatHTML_Command($string) {
 		return $this->formatHTML_ReservedWord($string, 'query_command');
 	}
-	
+
+	/**
+	 * Format subcommand into HTML
+	 *
+	 * @param string $string
+	 * @return string
+	 */
 	protected function formatHTML_SubCommand($string) {
 		return $this->formatHTML_ReservedWord("\t ".$string, 'query_subCommand');
 	}
-	
+
+	/**
+	 * Format column type into HTML
+	 *
+	 * @param string $string
+	 * @return string
+	 */
 	protected function formatHTML_ColumnType($string) {
 		return $this->formatHTML_ReservedWord($string, 'query_columnType');
 	}
 	
+	/**
+	 * Format reserved word into HTML
+	 * 
+	 * @param string $string
+	 * @param string $class
+	 * @return string
+	 */
 	protected function formatHTML_ReservedWord($string, $class='') {
 		return $this->formatHTML_InlineBlock($string, 'query_reservedWord '.$class);
 	}
 	
+	/**
+	 * Format identifier into HTML
+	 * 
+	 * @param string $string
+	 * @return string
+	 */
 	protected function formatHTML_Identifier($string) {
 		return $this->formatHTML_InlineBlock(SQLAdapterMySQL::doEscapeIdentifier($string), 'query_identifier');
 	}
 	
+	/**
+	 * Format inline block
+	 * 
+	 * @param string $string
+	 * @param string $class
+	 * @return string
+	 */
 	protected function formatHTML_InlineBlock($string, $class) {
 		return '<div class="ib '.$class.'">'.$string.'</div>';
 	}
