@@ -84,7 +84,7 @@ abstract class TypeDescriptor {
 	/**
 	 * Get true if we consider null an empty input string
 	 * 
-	 * @param string $field
+	 * @param FieldDescriptor $field
 	 * @return boolean
 	 */
 	public function emptyIsNull($field) {
@@ -94,7 +94,7 @@ abstract class TypeDescriptor {
 	/**
 	 * Parse args from field declaration
 	 * 
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 * @return stdClass
 	 */
 	public function parseArgs(array $args) {
@@ -129,7 +129,6 @@ abstract class TypeDescriptor {
 	 */
 	public function format(FieldDescriptor $field, &$value) {}
 
-
 	/**
 	 * Parse the value from SQL scalar to PHP type
 	 *
@@ -142,16 +141,16 @@ abstract class TypeDescriptor {
 		return $value;
 	}
 
-	/**
+	/* *
 	 * Format the value from PHP type to SQL scalar 
-	 *
+	 * 
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
 	 * @return string The parse $value
 	 * @see PermanentObject::formatFieldValue()
 	 */
-	public function formatValue(FieldDescriptor $field, $value) {
-		return $value;
-	}
+// 	public function formatValue(FieldDescriptor $field, $value) {
+// 		return $value;
+// 	}
 	
 }

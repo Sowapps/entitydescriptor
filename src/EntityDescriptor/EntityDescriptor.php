@@ -267,13 +267,12 @@ class EntityDescriptor {
 		if( !isset($this->fields[$fieldName]) ) {
 			throw new InvalidFieldException('unknownField', $fieldName, $value, null, $this->name);
 		}
-		/* @var Field $field */
-		$field	= $this->fields[$fieldName];
+		$field = $this->getField($fieldName);
 		if( !$field->writable ) {
 			throw new InvalidFieldException('readOnlyField', $fieldName, $value, null, $this->name);
 		}
-		$TYPE	= $field->getType();
-		// TODO Pre-format
+		$TYPE = $field->getType();
+		
 		$TYPE->preFormat($field, $value, $input, $ref);
 		
 		if( $value === NULL || ($value==='' && $TYPE->emptyIsNull($field)) ) {
@@ -458,7 +457,7 @@ class TypeNumber extends TypeDescriptor {
 	 * 
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		$args	= (object) array('decimals'=>0, 'min'=>-2147483648, 'max'=>2147483647);
@@ -553,7 +552,7 @@ class TypeString extends TypeDescriptor {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		$args	= (object) array('min'=>0, 'max'=>65535);
@@ -597,10 +596,22 @@ class TypeString extends TypeDescriptor {
 		return array('maxlength'=>$field->arg('max'), 'type'=>'text');
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::htmlInputAttr()
+	 * @param array $args
+	 */
 	public function htmlInputAttr($args) {
 		return ' maxlength="'.$args->max.'"';
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::emptyIsNull()
+	 * @param FieldDescriptor $field
+	 */
 	public function emptyIsNull($field) {
 		return $field->args->min > 0;
 	}
@@ -646,6 +657,13 @@ class TypeDate extends TypeDescriptor {
 		$value = $time;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @param FieldDescriptor $field The field to parse
+	 * @param string $value The field value to parse
+	 */
 	public function format(FieldDescriptor $field, &$value) {
 		$value = sqlDate($value);
 	}
@@ -694,7 +712,14 @@ class TypeDatetime extends TypeDescriptor {
 		// Format to timestamp
 		$value = $time;
 	}
-	
+
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @param FieldDescriptor $field The field to parse
+	 * @param string $value The field value to parse
+	 */
 	public function format(FieldDescriptor $field, &$value) {
 		$value = sqlDatetime($value);
 	}
@@ -729,7 +754,7 @@ class TypeTime extends TypeString {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		return (object) array('min'=>5, 'max'=>5);
@@ -749,7 +774,14 @@ class TypeTime extends TypeString {
 			throw new FE('notTime');
 		}
 	}
-	
+
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @param FieldDescriptor $field The field to parse
+	 * @param string $value The field value to parse
+	 */
 	public function format(FieldDescriptor $field, &$value) {
 		$value = strftime(static::$format, mktime($value[1], $value[2]));
 	}
@@ -777,7 +809,7 @@ class TypeInteger extends TypeNumber {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		$args	= (object) array('decimals'=>0, 'min'=>-2147483648, 'max'=>2147483647);
@@ -789,7 +821,14 @@ class TypeInteger extends TypeNumber {
 		}
 		return $args;
 	}
-	
+
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @param FieldDescriptor $field The field to parse
+	 * @param string $value The field value to parse
+	 */
 	public function format(FieldDescriptor $field, &$value) {
 		$value = (int) $value;
 	}
@@ -815,7 +854,7 @@ class TypeBoolean extends TypeInteger {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		return (object) array('decimals'=>0, 'min'=>0, 'max'=>1);
@@ -858,7 +897,7 @@ class TypeFloat extends TypeNumber {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		$args	= (object) array('decimals'=>2, 'min'=>-2147483648, 'max'=>2147483647);
@@ -896,7 +935,7 @@ class TypeDouble extends TypeNumber {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		$args	= (object) array('decimals'=>8, 'min'=>-2147483648, 'max'=>2147483647);	
@@ -934,7 +973,7 @@ class TypeNatural extends TypeInteger {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		$args	= (object) array('decimals'=>0, 'min'=>0, 'max'=>4294967295);
@@ -968,7 +1007,7 @@ class TypeRef extends TypeNatural {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		$args	= (object) array('entity'=>null, 'decimals'=>0, 'min'=>0, 'max'=>4294967295);
@@ -1013,7 +1052,7 @@ class TypeEmail extends TypeString {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		return (object) array('min'=>5, 'max'=>100);
@@ -1056,7 +1095,7 @@ class TypePassword extends TypeString {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		return (object) array('min'=>5, 'max'=>128);
@@ -1077,7 +1116,14 @@ class TypePassword extends TypeString {
 			throw new FE('invalidConfirmation');
 		}
 	}
-	
+
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @param FieldDescriptor $field The field to parse
+	 * @param string $value The field value to parse
+	 */
 	public function format(FieldDescriptor $field, &$value) {
 		$value = hashString($value);
 	}
@@ -1103,7 +1149,7 @@ class TypePhone extends TypeString {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		return (object) array('min'=>10, 'max'=>20);
@@ -1125,7 +1171,14 @@ class TypePhone extends TypeString {
 			throw new FE('notPhoneNumber');
 		}
 	}
-	
+
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @param FieldDescriptor $field The field to parse
+	 * @param string $value The field value to parse
+	 */
 	public function format(FieldDescriptor $field, &$value) {
 		// FR Only for now - Should use user language
 		$value = standardizePhoneNumber_FR($value, '.', 2);
@@ -1152,7 +1205,7 @@ class TypeURL extends TypeString {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		return (object) array('min'=>10, 'max'=>400);
@@ -1195,7 +1248,7 @@ class TypeIP extends TypeString {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		$args	= (object) array('min'=>7, 'max'=>40, 'version'=>null);
@@ -1242,7 +1295,7 @@ class TypeEnum extends TypeString {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		$args	= (object) array('min'=>1, 'max'=>50, 'source'=>null);
@@ -1351,7 +1404,7 @@ class TypeObject extends TypeString {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		$args	= (object) array('min'=>1, 'max'=>65535, 'class'=>null);
@@ -1363,7 +1416,14 @@ class TypeObject extends TypeString {
 		}
 		return $args;
 	}
-
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseValue()
+	 * @param FieldDescriptor $field The field to parse
+	 * @param string $value The field value to parse
+	 */
 	public function parseValue(FieldDescriptor $field, $value) {
 		if( is_object($value) ) {
 			return $value;
@@ -1384,8 +1444,15 @@ class TypeObject extends TypeString {
 		}
 // 		return $value;
 	}
-
-	public function formatValue(FieldDescriptor $field, $value) {
+	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @param FieldDescriptor $field The field to parse
+	 * @param string $value The field value to parse
+	 */
+	public function format(FieldDescriptor $field, $value) {
 		if( is_string($value) ) {
 			return $value;
 		}
@@ -1430,15 +1497,22 @@ class TypeCity extends TypeString {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) array('min'=>3, 'max'=>30);
 		return $args;
 	}
-
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @param FieldDescriptor $field The field to parse
+	 * @param string $value The field value to parse
+	 */
 	public function format(FieldDescriptor $field, &$value) {
-		$value	= str_ucwords($value);
+		$value = str_ucwords($value);
 	}
 }
 EntityDescriptor::registerType(new TypeCity());
@@ -1462,7 +1536,7 @@ class TypePostalCode extends TypeInteger {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 		$args	= (object) array('decimals'=>0, 'min'=>10000, 'max'=>99999);
@@ -1490,7 +1564,7 @@ class TypeSlug extends TypeString {
 	 *
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 * @param string[] $args Arguments
+	 * @param string[] $fargs Arguments
 	 */
 	public function parseArgs(array $fargs) {
 // 		if( !isset($fargs[0]) ) {
@@ -1512,6 +1586,15 @@ class TypeSlug extends TypeString {
 		return $args;
 	}
 	
+	/**
+	 * 
+	 * {@inheritDoc}
+	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::preFormat()
+	 * @param FieldDescriptor $field The field to format
+	 * @param string $value The field value to format
+	 * @param array $input The input to validate
+	 * @param PermanentEntity $ref The object to update, may be null
+	 */
 	public function preFormat(FieldDescriptor $field, &$value, $input, &$ref) {
 		$otherName = $field->arg('field');
 		$otherValue = (isset($input[$otherName]) ? $input[$otherName] : ($ref ? $ref->$otherName : null));
