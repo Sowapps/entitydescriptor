@@ -1,4 +1,8 @@
 <?php
+/**
+ * EntityDescriptor class & types declarations
+ */
+
 namespace Orpheus\EntityDescriptor;
 
 use Orpheus\Cache\FSCache;
@@ -7,21 +11,56 @@ use Orpheus\Publisher\Exception\InvalidFieldException;
 use \Exception;
 use Orpheus\Publisher\SlugGenerator;
 
-/** A class to describe an entity
+/**
+ * A class to describe an entity
  * 
- * @author Florent HAZARD
+ * @author Florent Hazard <contact@sowapps.com>
  * 
  * This class uses a YAML configuration file to describe the entity.
  * Thus you can easily update your database using dev_entities module and it validate the input data for you.
  */
 class EntityDescriptor {
-
+	
+	/**
+	 * The class associated to this entity
+	 * 
+	 * @var string
+	 */
 	protected $class;
+	
+	/**
+	 * The entity's name
+	 * 
+	 * @var string
+	 */
 	protected $name;
+	
+	/**
+	 * The entity's version
+	 * 
+	 * @var int
+	 */
 	protected $version;
-    /* @var $fields Field[] */
+	
+	/**
+	 * The fields of this entity
+	 * 
+	 * @var Field[]
+	 */
 	protected $fields	= array();
+	
+	/**
+	 * The indexes of this entity
+	 * 
+	 * @var string[]
+	 */
 	protected $indexes	= array();
+	
+	/**
+	 * Is this entity abstract ?
+	 * 
+	 * @var boolean
+	 */
 	protected $abstract	= false;
 	
 	const FLAG_ABSTRACT	= 'abstract';
@@ -36,7 +75,7 @@ class EntityDescriptor {
 	 * @return EntityDescriptor[]
 	 */
 	public static function getAllEntityDescriptors() {
-		$entities	= array();
+		$entities = array();
 		foreach( static::getAllEntities() as $entity ) {
 			$entities[$entity] = EntityDescriptor::load($entity);
 		}
@@ -49,19 +88,21 @@ class EntityDescriptor {
 	 * @return string[]
 	 */
 	public static function getAllEntities() {
-		$entities	= cleanscandir(pathOf(CONFDIR.ENTITY_DESCRIPTOR_CONFIG_PATH));
+		$entities = cleanscandir(pathOf(CONFDIR.ENTITY_DESCRIPTOR_CONFIG_PATH));
 		foreach( $entities as $i => &$filename ) {
 			$pi	= pathinfo($filename);
 			if( $pi['extension'] != 'yaml' ) {
 				unset($entities[$i]);
 				continue;
 			}
-			$filename	= $pi['filename'];
+			$filename = $pi['filename'];
 		}
 		return $entities;
 	}
 	
-	/** Load an entity descriptor from configuraiton file
+	/**
+	 * Load an entity descriptor from configuraiton file
+	 * 
 	 * @param string $name
 	 * @param string $class
 	 * @throws Exception
@@ -148,6 +189,8 @@ class EntityDescriptor {
 	}
 	
 	/**
+	 * Is this entity abstract ?
+	 * 
 	 * @return boolean True if abstract
 	 */
 	public function isAbstract() {
@@ -155,6 +198,8 @@ class EntityDescriptor {
 	}
 
 	/**
+	 * Set the abstract property of this entity
+	 * 
 	 * @param boolean True to set descriptor as abstract
 	 * @return EntityDescriptor the descriptor
 	 */
@@ -183,6 +228,8 @@ class EntityDescriptor {
 	}
 	
 	/**
+	 * Get all fields
+	 * 
 	 * @return FieldDescriptor[]
 	 */
 	public function getFields() {
@@ -190,6 +237,8 @@ class EntityDescriptor {
 	}
 
 	/**
+	 * Get all indexes
+	 * 
 	 * @return stdClass[]
 	 */
 	public function getIndexes() {
@@ -197,6 +246,8 @@ class EntityDescriptor {
 	}
 
 	/**
+	 * Get fields' name
+	 * 
 	 * @return string[]
 	 */
 	public function getFieldsName() {
@@ -205,6 +256,7 @@ class EntityDescriptor {
 	
 	/**
 	 * Validate a value for a specified field, an exception is thrown if the value is invalid
+	 * 
 	 * @param	string $fieldName The field to use
 	 * @param	mixed $value input|output value to validate for this field
 	 * @param	$input string[]
@@ -254,6 +306,15 @@ class EntityDescriptor {
 		// Field Formatter - Could be undefined
 	}
 	
+	/**
+	 * Validate input
+	 * 
+	 * @param array $input
+	 * @param array $fields
+	 * @param PermanentEntity $ref
+	 * @param int $errCount
+	 * @return array
+	 */
 	public function validate(array &$input, $fields=null, $ref=null, &$errCount=0) {
 		$data	= array();
 // 		$class = $this->class;
@@ -297,14 +358,26 @@ class EntityDescriptor {
 		}
 		return $data;
 	}
-
+	
+	/**
+	 * All known types
+	 * 
+	 * @var array
+	 */
 	protected static $types = array();
 	
+	/**
+	 * Register a TypeDescriptor
+	 * 
+	 * @param TypeDescriptor $type
+	 */
 	public static function registerType(TypeDescriptor $type) {
 		static::$types[$type->getName()] = $type;
 	}
 	
 	/**
+	 * Get a type by name
+	 * 
 	 * @param string $name Name of the type to get
 	 * @param string $type Output parameter for type
 	 * @throws Exception
@@ -317,7 +390,15 @@ class EntityDescriptor {
 		$type	= &static::$types[$name];
 		return $type;
 	}
-
+	
+	/**
+	 * parse type from configuration string
+	 * 
+	 * @param string $fieldName
+	 * @param string $desc
+	 * @throws Exception
+	 * @return StdClass
+	 */
 	public static function parseType($fieldName, $desc) {
 		$result = array('type'=>null, 'args'=>array(), 'default'=>null, 'flags'=>array());
 		$matches = null;
@@ -345,15 +426,32 @@ class EntityDescriptor {
 	}
 }
 
-// Short Field Exception
+/**
+ * shorten Field Exception class
+ * 
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class FE extends Exception { }
 
 defifn('ENTITY_DESCRIPTOR_CONFIG_PATH', 'entities/');
 
 // Primary Types
 
-// Format number([max=2147483647 [, min=-2147483648 [, decimals=0]]])
+/**
+ * Entity Type Number class
+ * 
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeNumber extends TypeDescriptor {
+	// Format number([max=2147483647 [, min=-2147483648 [, decimals=0]]])
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name = 'number';
 	
 	public function parseArgs(array $fargs) {
@@ -401,7 +499,19 @@ class TypeNumber extends TypeDescriptor {
 }
 EntityDescriptor::registerType(new TypeNumber());
 
+/**
+ * Entity Type String class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeString extends TypeDescriptor {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name = 'string';
 	
 	public function parseArgs(array $fargs) {
@@ -441,7 +551,19 @@ class TypeString extends TypeDescriptor {
 }
 EntityDescriptor::registerType(new TypeString());
 
+/**
+ * Entity Type Date class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeDate extends TypeDescriptor {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name = 'date';
 	/*
 	 * Date format is storing a date, not a specific moment, we don't care about timezone
@@ -465,7 +587,19 @@ class TypeDate extends TypeDescriptor {
 }
 EntityDescriptor::registerType(new TypeDate());
 
+/**
+ * Entity Type Datetime class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeDatetime extends TypeDescriptor {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name = 'datetime';
 	/*
 	 * Date format is storing a date, not a specific moment, we don't care about timezone
@@ -493,7 +627,19 @@ class TypeDatetime extends TypeDescriptor {
 }
 EntityDescriptor::registerType(new TypeDatetime());
 
+/**
+ * Entity Type Time class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeTime extends TypeString {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name 		= 'time';
 	public static $format	= SYSTEM_TIME_FORMAT;
 	/*
@@ -511,13 +657,26 @@ class TypeTime extends TypeString {
 	}
 	
 	public function format(FieldDescriptor $field, &$value) {
-		$value	= strftime(static::$format, mktime($value[1], $value[2]));
+		$value = strftime(static::$format, mktime($value[1], $value[2]));
 	}
 }
 EntityDescriptor::registerType(new TypeTime());
 
 // Derived types
+
+/**
+ * Entity Type Integer class
+ * 
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeInteger extends TypeNumber {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name = 'integer';
 
 	public function parseArgs(array $fargs) {
@@ -537,7 +696,19 @@ class TypeInteger extends TypeNumber {
 }
 EntityDescriptor::registerType(new TypeInteger());
 
+/**
+ * Entity Type Boolean class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeBoolean extends TypeInteger {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name = 'boolean';
 
 	public function parseArgs(array $fargs) {
@@ -551,9 +722,22 @@ class TypeBoolean extends TypeInteger {
 }
 EntityDescriptor::registerType(new TypeBoolean());
 
-// Format float([[max=2147483647, min=-2147483648], [decimals=2]]])
+/**
+ * Entity Type Float class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeFloat extends TypeNumber {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name	= 'float';
+	
+// Format float([[max=2147483647, min=-2147483648], [decimals=2]]])
 
 	public function parseArgs(array $fargs) {
 		$args	= (object) array('decimals'=>2, 'min'=>-2147483648, 'max'=>2147483647);
@@ -572,7 +756,19 @@ class TypeFloat extends TypeNumber {
 }
 EntityDescriptor::registerType(new TypeFloat());
 
+/**
+ * Entity Type Double class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeDouble extends TypeNumber {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name	= 'double';
 
 	public function parseArgs(array $fargs) {
@@ -592,8 +788,20 @@ class TypeDouble extends TypeNumber {
 }
 EntityDescriptor::registerType(new TypeDouble());
 
+/**
+ * Entity Type Natural class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeNatural extends TypeInteger {
-	protected $name		= 'natural';
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
+	protected $name = 'natural';
 
 	public function parseArgs(array $fargs) {
 		$args	= (object) array('decimals'=>0, 'min'=>0, 'max'=>4294967295);
@@ -605,8 +813,20 @@ class TypeNatural extends TypeInteger {
 }
 EntityDescriptor::registerType(new TypeNatural());
 
+/**
+ * Entity Type Ref class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeRef extends TypeNatural {
-	protected $name		= 'ref';
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
+	protected $name = 'ref';
 // 	protected $nullable	= false;
 	// MySQL needs more logic to select a null field with an index
 	// Prefer to set default to 0 instead of using nullable
@@ -626,8 +846,20 @@ class TypeRef extends TypeNatural {
 }
 EntityDescriptor::registerType(new TypeRef());
 
+/**
+ * Entity Type Email class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeEmail extends TypeString {
-	protected $name		= 'email';
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
+	protected $name = 'email';
 
 	public function parseArgs(array $fargs) {
 		return (object) array('min'=>5, 'max'=>100);
@@ -642,8 +874,20 @@ class TypeEmail extends TypeString {
 }
 EntityDescriptor::registerType(new TypeEmail());
 
+/**
+ * Entity Type Password class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypePassword extends TypeString {
-	protected $name		= 'password';
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
+	protected $name = 'password';
 
 	public function parseArgs(array $fargs) {
 		return (object) array('min'=>5, 'max'=>128);
@@ -662,8 +906,20 @@ class TypePassword extends TypeString {
 }
 EntityDescriptor::registerType(new TypePassword());
 
+/**
+ * Entity Type Phone class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypePhone extends TypeString {
-	protected $name		= 'phone';
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
+	protected $name = 'phone';
 
 	public function parseArgs(array $fargs) {
 		return (object) array('min'=>10, 'max'=>20);
@@ -684,7 +940,19 @@ class TypePhone extends TypeString {
 }
 EntityDescriptor::registerType(new TypePhone());
 
+/**
+ * Entity Type URL class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeURL extends TypeString {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name	= 'url';
 
 	public function parseArgs(array $fargs) {
@@ -700,7 +968,19 @@ class TypeURL extends TypeString {
 }
 EntityDescriptor::registerType(new TypeURL());
 
+/**
+ * Entity Type IP class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeIP extends TypeString {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name = 'ip';
 
 	public function parseArgs(array $fargs) {
@@ -720,7 +1000,19 @@ class TypeIP extends TypeString {
 }
 EntityDescriptor::registerType(new TypeIP());
 
+/**
+ * Entity Type Enum class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeEnum extends TypeString {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name = 'enum';
 
 	public function parseArgs(array $fargs) {
@@ -758,12 +1050,24 @@ class TypeEnum extends TypeString {
 }
 EntityDescriptor::registerType(new TypeEnum());
 
+/**
+ * Entity Type State class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeState extends TypeEnum {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
+	protected $name = 'state';
+	
 /*
  DEFAULT VALUE SHOULD BE THE FIRST OF SOURCE
  */
-	protected $name = 'state';
-
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		TypeString::validate($field, $value, $input, $ref);
 		if( !isset($field->args->source) ) { return; }
@@ -780,8 +1084,19 @@ class TypeState extends TypeEnum {
 }
 EntityDescriptor::registerType(new TypeState());
 
-
+/**
+ * Entity Type Object class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeObject extends TypeString {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name = 'object';
 
 	public function parseArgs(array $fargs) {
@@ -866,7 +1181,19 @@ class TypeObject extends TypeString {
 }
 EntityDescriptor::registerType(new TypeString());
 
+/**
+ * Entity Type City class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeCity extends TypeString {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name = 'city';
 
 	public function parseArgs(array $fargs) {
@@ -880,7 +1207,19 @@ class TypeCity extends TypeString {
 }
 EntityDescriptor::registerType(new TypeCity());
 
+/**
+ * Entity Type Postal Code class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypePostalCode extends TypeInteger {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name = 'postalcode';
 
 	public function parseArgs(array $fargs) {
@@ -890,7 +1229,19 @@ class TypePostalCode extends TypeInteger {
 }
 EntityDescriptor::registerType(new TypePostalCode());
 
+/**
+ * Entity Type Slug class
+ *
+ * @author Florent Hazard <contact@sowapps.com>
+ *
+ */
 class TypeSlug extends TypeString {
+	
+	/**
+	 * The type's name
+	 * 
+	 * @var string
+	 */
 	protected $name = 'slug';
 
 	public function parseArgs(array $fargs) {

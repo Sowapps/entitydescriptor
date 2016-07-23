@@ -89,8 +89,11 @@ abstract class PermanentEntity extends PermanentObject {
 	}
 
 	/**
-	 * Initializes class - REQUIRED
-	 * Initializes entity class
+	 * Initializes class
+	 * 
+	 * @param $isFinal Is this class final ?
+	 * 
+	 * Initialize entity class
 	 * You must call this method after the class declaration
 	 */
 	public static function init($isFinal=true) {
