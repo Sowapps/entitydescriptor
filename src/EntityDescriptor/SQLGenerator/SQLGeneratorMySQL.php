@@ -29,6 +29,7 @@ class SQLGeneratorMySQL implements SQLGenerator {
 	 * 
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::getColumnInfosFromField()
+	 * @param string $field
 	 */
 	public function getColumnInfosFromField($field) {
 		$TYPE = EntityDescriptor::getType($field->type);
@@ -106,6 +107,8 @@ class SQLGeneratorMySQL implements SQLGenerator {
 	 * 
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::getColumnDefinition()
+	 * @param string $field
+	 * @param boolean $withPK
 	 */
 	public function getColumnDefinition($field, $withPK=true) {
 		// 	text('mysqlColumnDefinition()');
@@ -120,6 +123,7 @@ class SQLGeneratorMySQL implements SQLGenerator {
 	 * 
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::getIndexDefinition()
+	 * @param string $index
 	 */
 	public function getIndexDefinition($index) {
 		$fields = '';
@@ -133,6 +137,7 @@ class SQLGeneratorMySQL implements SQLGenerator {
 	 * 
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::matchEntity()
+	 * @param EntityDescriptor $ed
 	 */
 	public function matchEntity(EntityDescriptor $ed) {
 		try {
@@ -219,6 +224,7 @@ class SQLGeneratorMySQL implements SQLGenerator {
 	 * 
 	 * {@inheritDoc}
 	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::getCreate()
+	 * @param EntityDescriptor $ed
 	 */
 	public function getCreate(EntityDescriptor $ed) {
 		// 	text('mysqlCreate()');

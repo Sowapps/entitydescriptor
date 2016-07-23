@@ -19,6 +19,7 @@ interface SQLGenerator {
 	 * Get column informations from $field
 	 * 
 	 * @param string $field
+	 * @return array
 	 */
 	public function getColumnInfosFromField($field);
 	
@@ -27,13 +28,15 @@ interface SQLGenerator {
 	 * 
 	 * @param string $field
 	 * @param boolean $withPK
+	 * @return string
 	 */
 	public function getColumnDefinition($field, $withPK=true);
 
 	/**
 	 * Get index definition
-	 *
+	 * 
 	 * @param string $index
+	 * @return string
 	 */
 	public function getIndexDefinition($index);
 	
@@ -41,6 +44,7 @@ interface SQLGenerator {
 	 * Get changes with entity
 	 * 
 	 * @param EntityDescriptor $ed
+	 * @return string
 	 */
 	public function matchEntity(EntityDescriptor $ed);
 	
@@ -48,6 +52,7 @@ interface SQLGenerator {
 	 * Get create SQL query
 	 * 
 	 * @param EntityDescriptor $ed
+	 * @return string
 	 */
 	public function getCreate(EntityDescriptor $ed);
 	
