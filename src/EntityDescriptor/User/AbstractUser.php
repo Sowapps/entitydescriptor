@@ -1,4 +1,8 @@
 <?php
+/**
+ * AbstractUser
+ */
+
 namespace Orpheus\EntityDescriptor\User;
 
 use Orpheus\Config\Config;
@@ -6,13 +10,14 @@ use Orpheus\EntityDescriptor\PermanentEntity;
 use Orpheus\Publisher\Exception\UnknownKeyException;
 use Orpheus\SQLAdapter\SQLAdapter;
 
-/** The user class
+/**
+ * The abstract user class
+ * 
  * The user class represents an user known by the current website as a permanent entity.
  * This class is commonly inherited by a user class for registered users.
  * But an user can be a Facebook user or a Site user for example.
  * 
- * Require core plugin.
- * 
+ * Require core plugin
  */
 abstract class AbstractUser extends PermanentEntity {
 
@@ -395,7 +400,8 @@ abstract class AbstractUser extends PermanentEntity {
 	/**
 	 * Check if this user can access to a module
 	 * 
-	 * @param string $module The module to look for
+	 * @param string $route The route to look for
+	 * @param int $accesslevel The access level
 	 * @return boolean True if this user can access to $module
 	 */
 	public static function loggedCanAccessToRoute($route, $accesslevel) {

@@ -97,7 +97,7 @@ abstract class TypeDescriptor {
 	 * @param string[] $fargs Arguments
 	 * @return stdClass
 	 */
-	public function parseArgs(array $args) {
+	public function parseArgs(array $fargs) {
 		return new \stdClass();
 	}
 
