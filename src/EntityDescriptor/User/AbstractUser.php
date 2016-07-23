@@ -15,11 +15,13 @@ use Orpheus\SQLAdapter\SQLAdapter;
  * 
  */
 abstract class AbstractUser extends PermanentEntity {
-	
-	//Attributes
-	protected static $table		= 'user';
-	
-	// Final attributes
+
+	/**
+	 * The table
+	 *
+	 * @var string
+	 */
+	protected static $table				= 'user';
 	
 	/**
 	 * The fields of this object
@@ -47,6 +49,12 @@ abstract class AbstractUser extends PermanentEntity {
 	const NOT_LOGGED	= 0;
 	const IS_LOGGED		= 1;
 	const LOGGED_FORCED	= 3;
+	
+	/**
+	 * Is user logged ?
+	 * 
+	 * @var boolean
+	 */
 	protected $login	= self::NOT_LOGGED;
 
 	// *** METHODES SURCHARGEES ***
@@ -89,7 +97,8 @@ abstract class AbstractUser extends PermanentEntity {
 		return bintest($this->login, $f);
 	}
 	
-	/** Log in this user to the current session.
+	/**
+	 * Log in this user to the current session.
 	 * 
 	 * @param string $force
 	 */
@@ -106,7 +115,8 @@ abstract class AbstractUser extends PermanentEntity {
 		static::logEvent('activity');
 	}
 	
-	/** Log out this user from the current session.
+	/**
+	 * Log out this user from the current session.
 	 * 
 	 * @param string $reason
 	 * @return boolean
@@ -124,30 +134,31 @@ abstract class AbstractUser extends PermanentEntity {
 		return true;
 	}
 
-	/** Checks permissions
-	 * @param $right The right to compare, can be the right string to look for or an integer.
-	 * @return True if this user has enough acess level.
+	/**
+	 * Check permissions
 	 * 
-	 * Compares the accesslevel of this user to the incoming right.
+	 * @param int|string $right The right to compare, can be the right string to look for or an integer.
+	 * @return boolean True if this user has enough acess level.
+	 * 
+	 * Compare the accesslevel of this user to the incoming right.
+	 * $right could be an int (accesslevel) or a string (right)
 	 */
 	public function checkPerm($right) {
-		//$right peut être un entier ou une chaine de caractère correspondant à un droit.
-		//Dans ce dernier cas, on va chercher l'entier correspondant.
 		if( !ctype_digit("$right") && $right != -1 ) {
 			if( $GLOBALS['RIGHTS']->$right===NULL ) {
 				throw new UnknownKeyException('unknownRight', $right);
 			}
 			$right = $GLOBALS['RIGHTS']->$right;
 		}
-// 		text("Access level: {$this->accesslevel}");
-// 		text("Required right: {$right}");
 		return ( $this->accesslevel >= $right );
 	}
 	
-	/** Checks access permissions
-	 * @param $module The module to check.
-	 * @return True if this user has enough acess level to access to this module.
-	 * @sa checkPerm()
+	/**
+	 * Check access permissions
+	 * 
+	 * @param string $module The module to check
+	 * @return boolean True if this user has enough acess level to access to this module
+	 * @see checkPerm()
 	 * @warning Obsolete
 	 */
 	public function checkAccess($module) {
@@ -158,59 +169,60 @@ abstract class AbstractUser extends PermanentEntity {
 		return $this->checkPerm((int) $GLOBALS['ACCESS']->$module);
 	}
 	
-	/** Checks if current logged user can edit this one.
-	 * @param $inputData The input data.
+	/**
+	 * Check if current logged user can edit this one
+	 * 
+	 * @param array $input The input
 	 */
-	public function checkPermissions($inputData) {
-		return static::checkAccessLevel($inputData, $this);
+	public function checkPermissions($input) {
+		return static::checkAccessLevel($input, $this);
 	}
 	
-	/** Checks if this user can alter data on the given user
-	 * @param $user The user we want to edit.
-	 * @return True if this user has enough acess level to edit $user or he is altering himself.
-	 * @sa loggedCanDo()
+	/**
+	 * Check if this user can alter data on the given user
+	 * 
+	 * @param AbstractUser $user The user we want to edit
+	 * @return boolean True if this user has enough acess level to edit $user or he is altering himself
+	 * @see loggedCanDo()
 	 * 
 	 * Checks if this user can alter on $user.
 	 */
-	public function canAlter(User $user) {
+	public function canAlter(AbstractUser $user) {
 // 		return $this->equals($user) || !$user->accesslevel || $this->accesslevel > $user->accesslevel;
 		return !$user->accesslevel || $this->accesslevel > $user->accesslevel;
 	}
 	
-	/** Check if this user can affect data on the given user
-	 * @param $action The action to look for.
-	 * @param $object The object we want to edit.
-	 * @return True if this user has enough access level to alter $object (or he is altering himself).
-	 * @sa loggedCanDo()
-	 * @sa canAlter()
+	/**
+	 * Check if this user can affect data on the given user
+	 * 
+	 * @param string $action The action to look for
+	 * @param object $object The object we want to edit
+	 * @return boolean True if this user has enough access level to alter $object (or he is altering himself)
+	 * @see loggedCanDo()
+	 * @see canAlter()
 	 * 
 	 * Check if this user can affect $object.
 	 */
 	public function canDo($action, $object=null) {
-// 		global $USER_CLASS;
 		return $this->equals($object) || ( $this->checkPerm($action) && ( !($object instanceof AbstractUser) || $this->canAlter($object) ) );
 	}
 	
-	// *** METHODES STATIQUES ***
-	
-// 	/** Logs in an user from data
-// 	/*!
-// 	 * @param $data The data for user authentification.
-// 	 * 
-// 	 * Log in a user from the given data.
-// 	 * It tries to validate given data, in case of errors, UserException are thrown.
-// 	 */
+	/**
+	 * Logs in an user using data
+	 * 
+	 * @param array $data
+	 * @param string $loginField
+	 * @return \Orpheus\SQLRequest\SQLSelectRequest|\Orpheus\EntityDescriptor\User\AbstractUser|\Orpheus\Publisher\PermanentObject\static[]
+	 */
 	public static function userLogin($data, $loginField='email') {
-// 		$name = self::checkName($data);
-// 		debug('$data', $data);
 		if( empty($data[$loginField]) )  {
 			static::throwException('invalidLoginID');
 		}
-		$name		= $data[$loginField];
+		$name = $data[$loginField];
 		if( empty($data['password']) )  {
 			static::throwException('invalidPassword');
 		}
-		$password	= hashString($data['password']);
+		$password = hashString($data['password']);
 		//self::checkForEntry() does not return password and id now.
 		
 		$user = static::get(array(
@@ -233,10 +245,18 @@ abstract class AbstractUser extends PermanentEntity {
 		return $user;
 	}
 	
+	/**
+	 * List all available login fields
+	 * 
+	 * @return string[]
+	 */
 	public static function listLoginFields() {
 		return array('email');
 	}
 	
+	/**
+	 * Log out current user
+	 */
 	public static function userLogout() {
 		global $USER;
 		if( isset($USER) ) {
@@ -244,8 +264,8 @@ abstract class AbstractUser extends PermanentEntity {
 		}
 	}
 
-	/** Log in an user from HTTP authentication
-	 * 
+	/**
+	 * Log in an user from HTTP authentication according to server variables PHP_AUTH_USER and PHP_AUTH_PW
 	 */
 	public static function httpLogin() {
 		$user = static::get(array(
@@ -263,7 +283,9 @@ abstract class AbstractUser extends PermanentEntity {
 		$user->login();
 	}
 
-	/** Create user from HTTP authentication
+	/**
+	 * Create user from HTTP authentication
+	 * 
 	 * @return User object
 	 * @warning Require other data than name and password ard optional
 	 *
@@ -273,9 +295,11 @@ abstract class AbstractUser extends PermanentEntity {
 		return static::createAndGet(array('name'=>$_SERVER['PHP_AUTH_USER'], 'password'=>$_SERVER['PHP_AUTH_PW']));
 	}
 
-	/** Create user from HTTP authentication
-	 * @return User object
-	 * @warning Require other data than name and password ard optional
+	/** 
+	 * Login from HTTP authentication, create user if not existing
+	 * 
+	 * @return boolean
+	 * @warning Require other data than name and password are optional
 	 *
 	 * Create user from HTTP authentication
 	 */
@@ -285,7 +309,7 @@ abstract class AbstractUser extends PermanentEntity {
 			return true;
 		} catch( NotFoundException $e ) {
 			if( Config::get('httpauth_autocreate') ) {
-				$user	= static::httpCreate();
+				$user = static::httpCreate();
 				$user->login();
 				return true;
 			}
@@ -293,9 +317,12 @@ abstract class AbstractUser extends PermanentEntity {
 		return false;
 	}
 	
-	/** Hash a password
+	/**
+	 * Hash a password
+	 * 
 	 * @param $str The clear password.
 	 * @return The hashed string.
+	 * @see hashString()
 	 * 
 	 * Hash $str using a salt.
 	 * Define constant USER_SALT to use your own salt.
@@ -303,31 +330,20 @@ abstract class AbstractUser extends PermanentEntity {
 	public static function hashPassword($str) {
 		return hashString($str);
 	}
-	
-	/** Check if the client is logged in
-	 * @return True if the current client is logged in.
-	 * 
-	 * Check if the client is logged in.
-	 * It verifies if a valid session exist.
-	 */
-// 	public static function is_login() {
-// 		throw new Exception('Method is_login() is obsolete, use isLogged()');
-// 		return ( !empty($_SESSION['USER']) && is_object($_SESSION['USER']) && $_SESSION['USER'] instanceof User && $_SESSION['USER']->login);
-// 		return !empty($_SESSION['USER']) && $_SESSION['USER']->login;
-// 	}
 
-	/** Checks if the client is logged in
-	 * @return True if the current client is logged in.
-	 *
-	 * Checks if the client is logged in.
+	/**
+	 * Check if the client is logged in
+	 * 
+	 * @return True if the current client is logged in
 	 */
 	public static function isLogged() {
 		return !empty($_SESSION['USER']) && $_SESSION['USER']->login;
-// 		return !empty($_SESSION['USER']) && $_SESSION['USER']->login;
 	}
 	
-	/** Get ID if user is logged
-	 * @return The id of the current client logged in.
+	/**
+	 * Get ID if user is logged
+	 * 
+	 * @return int|string The id of the current client logged in
 	 * 
 	 * Get the ID of the current user or 0.
 	 */
@@ -335,8 +351,10 @@ abstract class AbstractUser extends PermanentEntity {
 		return static::isLogged() ? $_SESSION['USER']->id() : 0;
 	}
 	
-	/** Get logged user object
-	 * @return The user of the current client logged in.
+	/**
+	 * Get logged user object
+	 * 
+	 * @return AbstractUser The user of the current client logged in
 	 * 
 	 * Get the user objectof the current logged client, or null.
 	 */
@@ -347,7 +365,7 @@ abstract class AbstractUser extends PermanentEntity {
 	/**
 	 * Load an user object
 	 * 
-	 * @param	$id mixed|mixed[] The object ID to load or a valid array of the object's data
+	 * @param	mixed|mixed[] $id The object ID to load or a valid array of the object's data
 	 * @param	boolean $nullable True to silent errors row and return null
 	 * @param	boolean $usingCache True to cache load and set cache, false to not cache
 	 * @return	PermanentObject The object
@@ -361,8 +379,10 @@ abstract class AbstractUser extends PermanentEntity {
 		return parent::load($id, $nullable, $usingCache);
 	}
 
-	/** Checks if this user has admin right
-	 * @return True if this user is logged and is admin.
+	/**
+	 * Check if this user has admin right
+	 * 
+	 * @return boolean True if this user is logged and is admin.
 	 *
 	 * Checks if this user has admin access level.
 	 * This is often used to determine if the current user can access to the admin panel.
@@ -372,69 +392,74 @@ abstract class AbstractUser extends PermanentEntity {
 		return ( !empty($USER) && $USER->accesslevel > 0 );
 	}
 	
-	/*
-	public static function getAccessOf($module) {
-		/* @var $ACCESS Config * /
-		global $ACCESS;
-		if( empty($ACCESS) || !isset($ACCESS->$module) ) { return null; }
-		$v	= $ACCESS->$module;
-		if( is_numeric($v) ) { return $v; }
-		global $RIGHTS;
-		if( isset($RIGHTS->$v) ) { return $RIGHTS->$v; }
-		return static::getAccessOf($v);
-	}
-	*/
-	
-	/** Checks if this user can access to a module
-	 * @param $module The module to look for.
-	 * @return True if this user can access to $module.
+	/**
+	 * Check if this user can access to a module
 	 * 
-	 * Checks if this user can access to $module.
+	 * @param string $module The module to look for
+	 * @return boolean True if this user can access to $module
 	 */
 	public static function loggedCanAccessToRoute($route, $accesslevel) {
-// 		global $USER;
-// 		debug('loggedCanAccessToRoute($route, '.$accesslevel.')', $route);
 		$user = static::getLoggedUser();
 		if( !ctype_digit($accesslevel) ) {
 			$accesslevel = static::getRoleAccesslevel($accesslevel);
 		}
-// 		$access	= static::getAccessOf($module);
-// 		if( $access===NULL ) { return true; }
 		$accesslevel = (int) $accesslevel;
 		return ( empty($user) && $accesslevel < 0 ) ||
 			( !empty($user) && $accesslevel >= 0 &&
 				$user instanceof AbstractUser && $user->checkPerm($accesslevel));
 	}
 	
+	/**
+	 * Get application roles
+	 * 
+	 * @return array
+	 */
 	public static function getAppRoles() {
 		return static::getUserRoles();
 	}
-
+	
+	/**
+	 * Get all user roles
+	 * 
+	 * @return array
+	 */
 	public static function getUserRoles() {
 		return Config::get('user_roles');
 	}
 	
+	/**
+	 * Get acesslevel of a role
+	 * 
+	 * @param string $role
+	 * @return int
+	 */
 	public static function getRoleAccesslevel($role) {
 		$roles = static::getAppRoles();
 		return $roles[$role];
 	}
 	
-	
-	/** Checks if this user can do a restricted action
-	 * @param $action The action to look for.
-	 * @param $object The object to edit if editing one or null. Default value is null.
-	 * @return True if this user can do this $action.
+	/**
+	 * Check if this user can do a restricted action
 	 * 
-	 * Checks if this user can do $action.
+	 * @param string $action The action to look for
+	 * @param AbstractUser $object The object to edit if editing one or null. Default value is null
+	 * @return boolean True if this user can do this $action
 	 */
 	public static function loggedCanDo($action, AbstractUser $object=null) {
 		global $USER;
 		return !empty($USER) && $USER->canDo($action, $object);
 	}
-	
+
 	/**
 	 * Check for object
-	 * @see PermanentObject::checkForObject()
+	 *
+	 * @param $data The new data to process.
+	 * @param $ref The referenced object (update only). Default value is null.
+	 * @see create()
+	 * @see update()
+	 *
+	 * This function is called by create() after checking user input data and before running for them.
+	 * In the base class, this method does nothing.
 	 */
 	public static function checkForObject($data, $ref=null) {
 		if( empty($data['email']) ) {
@@ -461,8 +486,13 @@ abstract class AbstractUser extends PermanentEntity {
 		}
 	}
 	
+	/**
+	 * Generate password
+	 * 
+	 * @return string
+	 * @deprecated Use PasswordGenerator from Orpheus WebTools
+	 */
 	public static function generatePassword() {
 		return generatePassword(mt_rand(8, 12));
 	}
 }
-// AbstractUser::init(false);
