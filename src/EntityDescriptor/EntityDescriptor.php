@@ -1452,9 +1452,9 @@ class TypeObject extends TypeString {
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
 	 */
-	public function format(FieldDescriptor $field, $value) {
+	public function format(FieldDescriptor $field, &$value) {
 		if( is_string($value) ) {
-			return $value;
+			return;
 		}
 		/* @var mixed $value */
 		$class = $field->arg('class');
@@ -1462,18 +1462,15 @@ class TypeObject extends TypeString {
 			if( !($value instanceof $class) ) {
 				throw new Exception('Field '.$field.'\'s value should be an instance of '.$class.', got '.get_class($value));
 			}
-// 			if( array_key_exists('Serializable', class_implements($class, true)) ) {
 			if( $value instanceof \Serializable ) {
-// 				$obj = new $class();
-				return $value->serialize();
+				$value = $value->serialize();
 			} else {
-				return serialize($value);
+				$value = serialize($value);
 			}
 			
 		} else {
-			return json_encode($value);
+			$value = json_encode($value);
 		}
-// 		return json_encode($value);
 	}
 }
 EntityDescriptor::registerType(new TypeObject());
