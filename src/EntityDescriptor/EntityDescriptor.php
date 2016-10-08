@@ -705,8 +705,12 @@ class TypeDatetime extends TypeDescriptor {
 		if( is_id($value) ) { return; }
 		$time = null;
 		// TODO: Find a better way to check all formats
-		if( !is_date($value, true, $time) ) {
-// 		if( !is_date($value, true, $time) && !is_date($value, true, $time, DATE_FORMAT_SQL) && !is_date($value, true, $time, DATE_FORMAT_GNU) ) {
+		$format = null;
+		if( $value[0] === '$' ) {
+			$value = substr($value, 1);
+			$format = DATE_FORMAT_GNU;
+		}
+		if( !is_date($value, true, $time, $format) ) {
 			throw new FE('notDatetime');
 		}
 		// Format to timestamp
