@@ -340,8 +340,8 @@ class EntityDescriptor {
 // 				}
 // 				debug('Current value ? '.$ref->getValue($fieldName));
 				// PHP does not make difference between 0 and NULL, so every non-null value is different from null.
-				if( !isset($ref) || ($ref->getValue($fieldName)===NULL XOR $input[$fieldName]===NULL) || $input[$fieldName]!=$ref->getValue($fieldName) ) {
-					$data[$fieldName]	= $input[$fieldName];
+				if( !isset($ref) || ($ref->getValue($fieldName) === NULL XOR $input[$fieldName] === NULL) || $input[$fieldName] != $ref->getValue($fieldName) ) {
+					$data[$fieldName] = $input[$fieldName];
 				}
 
 			} catch( UserException $e ) {
