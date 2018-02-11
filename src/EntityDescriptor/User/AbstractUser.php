@@ -111,6 +111,10 @@ abstract class AbstractUser extends PermanentEntity {
 		if( !$force && static::isLogged() ) {
 			static::throwException('alreadyLoggedin');
 		}
+		/**
+		 * @var AbstractUser $USER
+		 * @deprecated
+		 */
 		global $USER;
 		$_SESSION['USER'] = $USER = $this;
 		$this->login = $force ? self::LOGGED_FORCED : self::IS_LOGGED;
