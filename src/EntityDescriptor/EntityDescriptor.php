@@ -453,10 +453,8 @@ class TypeNumber extends TypeDescriptor {
 	protected $name = 'number';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) ['decimals' => 0, 'min' => -2147483648, 'max' => 2147483647];
@@ -478,13 +476,11 @@ class TypeNumber extends TypeDescriptor {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		$value = sanitizeNumber($value);
@@ -501,10 +497,8 @@ class TypeNumber extends TypeDescriptor {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::getHTMLInputAttr()
+	 * @see TypeDescriptor::getHTMLInputAttr()
 	 */
 	public function getHTMLInputAttr($field) {
 		$min = $field->arg('min');
@@ -526,10 +520,8 @@ class TypeNumber extends TypeDescriptor {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param array $args
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::htmlInputAttr()
+	 * @see TypeDescriptor::htmlInputAttr()
 	 */
 	public function htmlInputAttr($args) {
 		return ' maxlength="' . max(static::getMaxLengthOf($args->min, $args->decimals), static::getMaxLengthOf($args->max, $args->decimals)) . '"';
@@ -546,6 +538,9 @@ EntityDescriptor::registerType(new TypeNumber());
  */
 class TypeString extends TypeDescriptor {
 	
+	protected static $defaultMinLength = 0;
+	protected static $defaultMaxLength = 65535;
+	
 	/**
 	 * The type's name
 	 *
@@ -554,13 +549,11 @@ class TypeString extends TypeDescriptor {
 	protected $name = 'string';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
-		$args = (object) ['min' => 0, 'max' => 65535];
+		$args = (object) ['min' => static::$defaultMinLength, 'max' => static::$defaultMaxLength];
 		if( isset($fargs[1]) ) {
 			$args->min = $fargs[0];
 			$args->max = $fargs[1];
@@ -573,13 +566,11 @@ class TypeString extends TypeDescriptor {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		$len = strlen($value);
@@ -604,20 +595,16 @@ class TypeString extends TypeDescriptor {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param array $args
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::htmlInputAttr()
+	 * @see TypeDescriptor::htmlInputAttr()
 	 */
 	public function htmlInputAttr($args) {
 		return ' maxlength="' . $args->max . '"';
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::emptyIsNull()
+	 * @see TypeDescriptor::emptyIsNull()
 	 */
 	public function emptyIsNull($field) {
 		return $field->args->min > 0;
@@ -645,13 +632,11 @@ class TypeDate extends TypeDescriptor {
 	 */
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		// FR Only for now - Should use user language
@@ -668,11 +653,9 @@ class TypeDate extends TypeDescriptor {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @see TypeDescriptor::format()
 	 */
 	public function format(FieldDescriptor $field, &$value) {
 		$value = sqlDate($value);
@@ -700,13 +683,11 @@ class TypeDatetime extends TypeDescriptor {
 	 */
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		if( !empty($input[$field->name . '_time']) ) {
@@ -736,11 +717,9 @@ class TypeDatetime extends TypeDescriptor {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @see TypeDescriptor::format()
 	 */
 	public function format(FieldDescriptor $field, &$value) {
 		$value = sqlDatetime($value);
@@ -774,23 +753,19 @@ class TypeTime extends TypeString {
 	protected $name = 'time';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		return (object) ['min' => 5, 'max' => 5];
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		if( !is_time($value, $value) ) {
@@ -799,11 +774,9 @@ class TypeTime extends TypeString {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @see TypeDescriptor::format()
 	 */
 	public function format(FieldDescriptor $field, &$value) {
 		$value = strftime(static::$format, mktime($value[1], $value[2]));
@@ -830,10 +803,8 @@ class TypeInteger extends TypeNumber {
 	protected $name = 'integer';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) ['decimals' => 0, 'min' => -2147483648, 'max' => 2147483647];
@@ -849,11 +820,9 @@ class TypeInteger extends TypeNumber {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @see TypeDescriptor::format()
 	 */
 	public function format(FieldDescriptor $field, &$value) {
 		$value = (int) $value;
@@ -878,23 +847,19 @@ class TypeBoolean extends TypeInteger {
 	protected $name = 'boolean';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		return (object) ['decimals' => 0, 'min' => 0, 'max' => 1];
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		$value = (int) !empty($value);
@@ -922,10 +887,8 @@ class TypeFloat extends TypeNumber {
 	// Format float([[max=2147483647, min=-2147483648], [decimals=2]]])
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) ['decimals' => 2, 'min' => -2147483648, 'max' => 2147483647];
@@ -933,15 +896,11 @@ class TypeFloat extends TypeNumber {
 			$args->decimals = $fargs[0];
 			$args->min = $fargs[1];
 			$args->max = $fargs[2];
-		} else {
-			if( isset($fargs[1]) ) {
-				$args->min = $fargs[0];
-				$args->max = $fargs[1];
-			} else {
-				if( isset($fargs[0]) ) {
-					$args->decimals = $fargs[0];
-				}
-			}
+		} elseif( isset($fargs[1]) ) {
+			$args->min = $fargs[0];
+			$args->max = $fargs[1];
+		} elseif( isset($fargs[0]) ) {
+			$args->decimals = $fargs[0];
 		}
 		return $args;
 	}
@@ -965,10 +924,8 @@ class TypeDouble extends TypeNumber {
 	protected $name = 'double';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) ['decimals' => 8, 'min' => -2147483648, 'max' => 2147483647];
@@ -976,15 +933,11 @@ class TypeDouble extends TypeNumber {
 			$args->decimals = $fargs[0];
 			$args->min = $fargs[1];
 			$args->max = $fargs[2];
-		} else {
-			if( isset($fargs[1]) ) {
-				$args->min = $fargs[0];
-				$args->max = $fargs[1];
-			} else {
-				if( isset($fargs[0]) ) {
-					$args->decimals = $fargs[0];
-				}
-			}
+		} elseif( isset($fargs[1]) ) {
+			$args->min = $fargs[0];
+			$args->max = $fargs[1];
+		} elseif( isset($fargs[0]) ) {
+			$args->decimals = $fargs[0];
 		}
 		return $args;
 	}
@@ -1008,10 +961,8 @@ class TypeNatural extends TypeInteger {
 	protected $name = 'natural';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) ['decimals' => 0, 'min' => 0, 'max' => 4294967295];
@@ -1043,10 +994,8 @@ class TypeRef extends TypeNatural {
 	// Prefer to set default to 0 instead of using nullable
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) ['entity' => null, 'decimals' => 0, 'min' => 0, 'max' => 4294967295];
@@ -1057,13 +1006,11 @@ class TypeRef extends TypeNatural {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		id($value);
@@ -1089,23 +1036,19 @@ class TypeEmail extends TypeString {
 	protected $name = 'email';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		return (object) ['min' => 5, 'max' => 100];
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		parent::validate($field, $value, $input, $ref);
@@ -1125,6 +1068,9 @@ EntityDescriptor::registerType(new TypeEmail());
  */
 class TypePassword extends TypeString {
 	
+	protected static $defaultMinLength = 5;
+	protected static $defaultMaxLength = 128;
+	
 	/**
 	 * The type's name
 	 *
@@ -1133,23 +1079,11 @@ class TypePassword extends TypeString {
 	protected $name = 'password';
 	
 	/**
-	 *
-	 * {@inheritDoc}
-	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
-	 */
-	public function parseArgs(array $fargs) {
-		return (object) ['min' => 5, 'max' => 128];
-	}
-	
-	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		parent::validate($field, $value, $input, $ref);
@@ -1159,11 +1093,9 @@ class TypePassword extends TypeString {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @see TypeDescriptor::format()
 	 */
 	public function format(FieldDescriptor $field, &$value) {
 		$value = hashString($value);
@@ -1188,23 +1120,19 @@ class TypePhone extends TypeString {
 	protected $name = 'phone';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		return (object) ['min' => 10, 'max' => 20];
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		parent::validate($field, $value, $input, $ref);
@@ -1215,11 +1143,9 @@ class TypePhone extends TypeString {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @see TypeDescriptor::format()
 	 */
 	public function format(FieldDescriptor $field, &$value) {
 		// FR Only for now - Should use user language
@@ -1245,23 +1171,19 @@ class TypeURL extends TypeString {
 	protected $name = 'url';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		return (object) ['min' => 10, 'max' => 400];
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		parent::validate($field, $value, $input, $ref);
@@ -1289,10 +1211,8 @@ class TypeIP extends TypeString {
 	protected $name = 'ip';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) ['min' => 7, 'max' => 40, 'version' => null];
@@ -1303,13 +1223,11 @@ class TypeIP extends TypeString {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		parent::validate($field, $value, $input, $ref);
@@ -1337,10 +1255,8 @@ class TypeEnum extends TypeString {
 	protected $name = 'enum';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) ['min' => 1, 'max' => 50, 'source' => null];
@@ -1351,13 +1267,11 @@ class TypeEnum extends TypeString {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		parent::validate($field, $value, $input, $ref);
@@ -1399,13 +1313,11 @@ class TypeState extends TypeEnum {
 	 */
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to validate
 	 * @param string $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::validate()
+	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		TypeString::validate($field, $value, $input, $ref);
@@ -1442,10 +1354,8 @@ class TypeObject extends TypeString {
 	protected $name = 'object';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) ['min' => 1, 'max' => 65535, 'class' => null];
@@ -1459,11 +1369,9 @@ class TypeObject extends TypeString {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseValue()
+	 * @see TypeDescriptor::parseValue()
 	 */
 	public function parseValue(FieldDescriptor $field, $value) {
 		if( is_object($value) ) {
@@ -1487,11 +1395,9 @@ class TypeObject extends TypeString {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @see TypeDescriptor::format()
 	 */
 	public function format(FieldDescriptor $field, &$value) {
 		if( is_string($value) ) {
@@ -1533,10 +1439,8 @@ class TypeCity extends TypeString {
 	protected $name = 'city';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) ['min' => 3, 'max' => 30];
@@ -1544,11 +1448,9 @@ class TypeCity extends TypeString {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::format()
+	 * @see TypeDescriptor::format()
 	 */
 	public function format(FieldDescriptor $field, &$value) {
 		$value = str_ucwords($value);
@@ -1573,10 +1475,8 @@ class TypePostalCode extends TypeInteger {
 	protected $name = 'postalcode';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) ['decimals' => 0, 'min' => 10000, 'max' => 99999];
@@ -1602,15 +1502,10 @@ class TypeSlug extends TypeString {
 	protected $name = 'slug';
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param string[] $fargs Arguments
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::parseArgs()
+	 * @see TypeDescriptor::parseArgs()
 	 */
 	public function parseArgs(array $fargs) {
-		// 		if( !isset($fargs[0]) ) {
-		// 			throw new Exception('Require TypeSlug as slug has one argument at least');
-		// 		}
 		$args = (object) ['field' => 'name', 'min' => 0, 'max' => 100];
 		if( isset($fargs[2]) ) {
 			$args->field = $fargs[0];
@@ -1630,13 +1525,11 @@ class TypeSlug extends TypeString {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param FieldDescriptor $field The field to format
 	 * @param string $value The field value to format
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
-	 * @see \Orpheus\EntityDescriptor\TypeDescriptor::preFormat()
+	 * @see TypeDescriptor::preFormat()
 	 */
 	public function preFormat(FieldDescriptor $field, &$value, $input, &$ref) {
 		$otherName = $field->arg('field');

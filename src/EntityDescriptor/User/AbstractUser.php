@@ -7,6 +7,7 @@ namespace Orpheus\EntityDescriptor\User;
 
 use Orpheus\Config\Config;
 use Orpheus\EntityDescriptor\PermanentEntity;
+use Orpheus\Exception\UserException;
 use Orpheus\Publisher\Exception\UnknownKeyException;
 use Orpheus\SQLAdapter\SQLAdapter;
 
@@ -406,7 +407,7 @@ abstract class AbstractUser extends PermanentEntity {
 	/**
 	 * Get logged user object
 	 *
-	 * @return AbstractUser The user of the current client logged in
+	 * @return static The user of the current client logged in
 	 *
 	 * Get the user objectof the current logged client, or null.
 	 */
@@ -469,13 +470,12 @@ abstract class AbstractUser extends PermanentEntity {
 	/**
 	 * Check for object
 	 *
-	 * @param $data The new data to process.
-	 * @param $ref The referenced object (update only). Default value is null.
-	 * @see create()
-	 * @see update()
-	 *
 	 * This function is called by create() after checking user input data and before running for them.
 	 * In the base class, this method does nothing.
+	 *
+	 * @param array $data The new data to process.
+	 * @param mixed $ref The referenced object (update only). Default value is null.
+	 * @throws UserException
 	 */
 	public static function checkForObject($data, $ref = null) {
 		if( empty($data['email']) ) {
@@ -487,15 +487,17 @@ abstract class AbstractUser extends PermanentEntity {
 			$what .= ', name';
 			$where .= ' OR name LIKE ' . static::formatValue($data['name']);
 		}
-		$user = static::get([
-			'what'   => $what,
-			'where'  => $where,
-			'output' => SQLAdapter::ARR_FIRST,
-		]);
-		if( !empty($user) ) {
+		$query = static::get()
+			->fields($what)
+			->where($where)
+			->asArray();
+		if( $ref ) {
+			$query->where('id', '!=', id($ref));
+		}
+		$user = $query->run();
+		if( $user ) {
 			if( $user['email'] === $data['email'] ) {
 				static::throwException("emailAlreadyUsed");
-				
 			} else {
 				static::throwException("entryExisting");
 			}
