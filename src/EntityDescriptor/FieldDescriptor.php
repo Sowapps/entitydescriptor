@@ -112,8 +112,7 @@ class FieldDescriptor {
 	public function getDefault() {
 		if( is_object($this->default) ) {
 			$this->default = call_user_func_array($this->default->type, (array) $this->default->args);
-		} else
-		if( defined($this->default) ) {
+		} elseif( defined($this->default) ) {
 			return constant($this->default);
 		}
 		return $this->default;
@@ -156,14 +155,14 @@ class FieldDescriptor {
 		// Field flags
 		if( isset($desc['writable']) ) {
 			$field->writable = !empty($desc['writable']);
-		} else if( $field->writable ) {
+		} elseif( $field->writable ) {
 			$field->writable = !in_array('readonly', $parse->flags);
 		} else {
 			$field->writable = in_array('writable', $parse->flags);
 		}
 		if( isset($desc['nullable']) ) {
 			$field->nullable = !empty($desc['nullable']);
-		} else if( $field->nullable ) {
+		} elseif( $field->nullable ) {
 			$field->nullable = !in_array('notnull', $parse->flags);
 		} else {
 			$field->nullable = in_array('nullable', $parse->flags);

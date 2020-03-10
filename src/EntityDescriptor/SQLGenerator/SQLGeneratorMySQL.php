@@ -6,20 +6,20 @@
 namespace Orpheus\EntityDescriptor\SQLGenerator;
 
 use Orpheus\EntityDescriptor\EntityDescriptor;
-use Orpheus\Exception\UserException;
-use Orpheus\SQLAdapter\SQLAdapterMySQL;
-use Orpheus\EntityDescriptor\TypeString;
-use Orpheus\EntityDescriptor\TypeNumber;
-use Orpheus\EntityDescriptor\TypePassword;
 use Orpheus\EntityDescriptor\TypeDate;
 use Orpheus\EntityDescriptor\TypeDatetime;
+use Orpheus\EntityDescriptor\TypeNumber;
+use Orpheus\EntityDescriptor\TypePassword;
+use Orpheus\EntityDescriptor\TypeString;
+use Orpheus\Exception\UserException;
 use Orpheus\SQLAdapter\Exception\SQLException;
+use Orpheus\SQLAdapter\SQLAdapterMySQL;
 
 /**
  * The SQLGeneratorMySQL class
- * 
+ *
  * Use this class to generate entity's table SQL queries and check changes in structure
- * 
+ *
  * @author Florent Hazard <contact@sowapps.com>
  *
  */
@@ -38,40 +38,34 @@ class SQLGeneratorMySQL implements SQLGenerator {
 			$max = $TYPE instanceof TypePassword ? 128 : $field->args->max;
 			if( $max < 256 ) {
 				$cType = "VARCHAR({$field->args->max})";
-			} else
-			if( $max < 65536 ) {
+			} elseif( $max < 65536 ) {
 				$cType = "TEXT";
-			} else
-			if( $max < 16777216 ) {
+			} elseif( $max < 16777216 ) {
 				$cType = "MEDIUMTEXT";
 			} else {
 				$cType = "LONGTEXT";
 			}
-		} else
-		if( $TYPE instanceof TypeNumber ) {
+		} elseif( $TYPE instanceof TypeNumber ) {
 			if( !isset($field->args->max) ) {
-				debug('Issue with '.$field->name.', missing max argument', $field->args);
+				debug('Issue with ' . $field->name . ', missing max argument', $field->args);
 			}
-			$dc			= strlen((int) $field->args->max);
-			$unsigned	= $field->args->min >= 0 ? 1 : 0;
+			$dc = strlen((int) $field->args->max);
+			$unsigned = $field->args->min >= 0 ? 1 : 0;
 			if( !$field->args->decimals ) {
-// 				$max	= (int) $field->args->max;// Int max on 32 bits systems is incompatible with SQL
-				$max	= $field->args->max;// Treat it as in
-// 				debug('$field - '.$field->name.', type='.$field->type.' => '.$max);
-				$f			= 1+1*$unsigned;
-				if( $max < 128*$f ) {
-					$cType	= "TINYINT";
-				} else
-				if( $max < 32768*$f ) {
-					$cType	= "SMALLINT";
-				} else
-				if( $max < 8388608*$f ) {
-					$cType	= "MEDIUMINT";
-				} else
-				if( $max < 2147483648*$f ) {
-					$cType	= "INT";
+				// 				$max	= (int) $field->args->max;// Int max on 32 bits systems is incompatible with SQL
+				$max = $field->args->max;// Treat it as in
+				// 				debug('$field - '.$field->name.', type='.$field->type.' => '.$max);
+				$f = 1 + 1 * $unsigned;
+				if( $max < 128 * $f ) {
+					$cType = "TINYINT";
+				} elseif( $max < 32768 * $f ) {
+					$cType = "SMALLINT";
+				} elseif( $max < 8388608 * $f ) {
+					$cType = "MEDIUMINT";
+				} elseif( $max < 2147483648 * $f ) {
+					$cType = "INT";
 				} else {
-					$cType	= "BIGINT";
+					$cType = "BIGINT";
 				}
 				$cType .= '('.strlen($max).')';
 					
@@ -79,7 +73,7 @@ class SQLGeneratorMySQL implements SQLGenerator {
 				$dc += $field->args->decimals+1;
 				// http://code.rohitink.com/2013/06/12/mysql-integer-float-decimal-data-types-differences/
 				if( $dc < 23 && $field->args->decimals < 8 ) {// Approx accurate to 7 decimals
-// 				if( $dc < 7 ) {// Approx accurate to 7 decimals
+					// 				if( $dc < 7 ) {// Approx accurate to 7 decimals
 					$cType = "FLOAT";
 				} else {// Approx accurate to 15 decimals
 					$cType = "DOUBLE";
@@ -87,16 +81,14 @@ class SQLGeneratorMySQL implements SQLGenerator {
 				$cType .= "({$dc},{$field->args->decimals})";
 			}
 			if( $unsigned ) {
-				$cType	.= ' UNSIGNED';
+				$cType .= ' UNSIGNED';
 			}
-		} else
-		if( $TYPE instanceof TypeDate ) {
+		} elseif( $TYPE instanceof TypeDate ) {
 			$cType = 'DATE';
-		} else
-		if( $TYPE instanceof TypeDatetime ) {
+		} elseif( $TYPE instanceof TypeDatetime ) {
 			$cType = 'DATETIME';
 		} else {
-			throw new UserException('Type of '.$field->name.' ('.$TYPE->getName().') not found');
+			throw new UserException('Type of ' . $field->name . ' (' . $TYPE->getName() . ') not found');
 		}
 		$r = array('name'=>$field->name, 'type'=>$cType, 'nullable'=>!!$field->nullable);
 		$r['autoIncrement'] = $r['primaryKey'] = ($field->name=='id');
@@ -181,10 +173,9 @@ class SQLGeneratorMySQL implements SQLGenerator {
 					if( !isset($cIndexes[$ci->Key_name]) ) {
 						$type		= 'INDEX';
 						if( !$ci->Non_unique ) {
-							$type	= 'UNIQUE';
-						} else
-						if( $ci->Index_type==='FULLTEXT' ) {
-							$type	= 'FULLTEXT';
+							$type = 'UNIQUE';
+						} elseif( $ci->Index_type === 'FULLTEXT' ) {
+							$type = 'FULLTEXT';
 						}
 						$cIndexes[$ci->Key_name] = (object) array('name'=>$ci->Key_name, 'type'=>$type, 'fields'=>array());
 					}
