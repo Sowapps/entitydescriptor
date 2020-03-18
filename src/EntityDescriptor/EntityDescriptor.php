@@ -5,11 +5,15 @@
 
 namespace Orpheus\EntityDescriptor;
 
+use DateTime;
 use Exception;
 use Orpheus\Cache\FSCache;
 use Orpheus\Config\YAML\YAML;
+use Orpheus\Exception\UserException;
 use Orpheus\Publisher\Exception\InvalidFieldException;
+use Orpheus\Publisher\PermanentObject\PermanentObject;
 use Orpheus\Publisher\SlugGenerator;
+use Orpheus\Time\Date;
 
 /**
  * A class to describe an entity
@@ -25,42 +29,49 @@ class EntityDescriptor {
 	const DESCRIPTORCLASS = 'EntityDescriptor';
 	const IDFIELD = 'id';
 	const VERSION = 4;
+	
 	/**
 	 * All known types
 	 *
 	 * @var array
 	 */
 	protected static $types = [];
+	
 	/**
 	 * The class associated to this entity
 	 *
 	 * @var string
 	 */
 	protected $class;
+	
 	/**
 	 * The entity's name
 	 *
 	 * @var string
 	 */
 	protected $name;
+	
 	/**
 	 * The entity's version
 	 *
 	 * @var int
 	 */
 	protected $version;
+	
 	/**
 	 * The fields of this entity
 	 *
-	 * @var Field[]
+	 * @var FieldDescriptor[]
 	 */
 	protected $fields = [];
+	
 	/**
 	 * The indexes of this entity
 	 *
 	 * @var string[]
 	 */
 	protected $indexes = [];
+	
 	/**
 	 * Is this entity abstract ?
 	 *
@@ -73,7 +84,7 @@ class EntityDescriptor {
 	 *
 	 * @param $name string
 	 * @param $fields FieldDescriptor[]
-	 * @param $indexes stdClass[]
+	 * @param $indexes object[]
 	 * @param $class string
 	 */
 	protected function __construct($name, $fields, $indexes, $class = null) {
@@ -116,7 +127,7 @@ class EntityDescriptor {
 	/**
 	 * Get all indexes
 	 *
-	 * @return stdClass[]
+	 * @return object[]
 	 */
 	public function getIndexes() {
 		return $this->indexes;
@@ -142,13 +153,9 @@ class EntityDescriptor {
 	 */
 	public function validate(array &$input, $fields = null, $ref = null, &$errCount = 0) {
 		$data = [];
-		// 		$class = $this->class;
-		// 		debug('validate() - $fields', $fields);
-		// 		debug('validate() - $ref', $ref);
 		foreach( $this->fields as $fieldName => &$fData ) {
 			try {
 				if( $fields !== null && !in_array($fieldName, $fields) ) {
-					// 					debug('Field not in $fields array');
 					unset($input[$fieldName]);
 					// If updating, we do not modify a field not in $fields
 					// If creating, we set to default a field not in $fields
@@ -162,13 +169,7 @@ class EntityDescriptor {
 				if( !isset($input[$fieldName]) ) {
 					$input[$fieldName] = null;
 				}
-				// 				debug('validate() - '.$fieldName, $input[$fieldName]);
 				$this->validateFieldValue($fieldName, $input[$fieldName], $input, $ref);
-				// 				if( isset($ref) ) {
-				// 					debug("Ref -> $fieldName => ", $ref->getValue($fieldName));
-				// 					debug("New value", $uInputData[$fieldName]);
-				// 				}
-				// 				debug('Current value ? '.$ref->getValue($fieldName));
 				// PHP does not make difference between 0 and NULL, so every non-null value is different from null.
 				if( !isset($ref) || ($ref->getValue($fieldName) === null XOR $input[$fieldName] === null) || $input[$fieldName] != $ref->getValue($fieldName) ) {
 					$data[$fieldName] = $input[$fieldName];
@@ -177,11 +178,11 @@ class EntityDescriptor {
 			} catch( UserException $e ) {
 				$errCount++;
 				if( isset($this->class) ) {
+					/** @var PermanentObject $c */
 					$c = $this->class;
 					$c::reportException($e);
 				} else {
 					reportError($e);
-					// 					throw $e;
 				}
 			}
 		}
@@ -205,28 +206,26 @@ class EntityDescriptor {
 		if( !$field->writable ) {
 			throw new InvalidFieldException('readOnlyField', $fieldName, $value, null, $this->name);
 		}
-		$TYPE = $field->getType();
+		$fieldType = $field->getType();
 		
-		$TYPE->preFormat($field, $value, $input, $ref);
+		$fieldType->preFormat($field, $value, $input, $ref);
 		
-		if( $value === null || ($value === '' && $TYPE->emptyIsNull($field)) ) {
+		if( $value === null || ($value === '' && $fieldType->emptyIsNull($field)) ) {
 			$value = null;
 			if( isset($field->default) ) {
 				// Look for default value
 				$value = $field->getDefault();
 				
-			} else {
-				if( !$field->nullable ) {
-					// Reject null value
-					throw new InvalidFieldException('requiredField', $fieldName, $value, null, $this->name);
-				}
+			} elseif( !$field->nullable ) {
+				// Reject null value
+				throw new InvalidFieldException('requiredField', $fieldName, $value, null, $this->name);
 			}
 			// We will format valid null value later (in formatter)
 			return;
 		}
 		// TYPE Validator - Use inheritance, mandatory in super class
 		try {
-			$TYPE->validate($field, $value, $input, $ref);
+			$fieldType->validate($field, $value, $input, $ref);
 			// Field Validator - Could be undefined
 			if( !empty($field->validator) ) {
 				call_user_func_array($field->validator, [$field, &$value, $input, &$ref]);
@@ -236,14 +235,14 @@ class EntityDescriptor {
 		}
 		
 		// TYPE Formatter - Use inheritance, mandatory in super class
-		$TYPE->format($field, $value);
+		$value = $fieldType->parseUserValue($field, $value);
 		// Field Formatter - Could be undefined
 	}
 	
 	/**
 	 * Get one field by name
 	 *
-	 * @param $name The field name
+	 * @param string $name The field name
 	 * @return FieldDescriptor
 	 */
 	public function getField($name) {
@@ -313,8 +312,6 @@ class EntityDescriptor {
 			throw new \Exception('Descriptor file for "' . $name . '" is corrupted, empty or not found, there is no field.');
 		}
 		// Build descriptor
-		//    Parse Config file
-		//      Fields
 		$fields = [];
 		if( !empty($conf->parent) ) {
 			if( !is_array($conf->parent) ) {
@@ -333,7 +330,7 @@ class EntityDescriptor {
 			$fields[$fieldName] = FieldDescriptor::parseType($fieldName, $fieldInfos);
 		}
 		
-		//      Indexes
+		// Indexes
 		$indexes = [];
 		if( !empty($conf->indexes) ) {
 			foreach( $conf->indexes as $index ) {
@@ -341,14 +338,13 @@ class EntityDescriptor {
 				$indexes[] = (object) ['name' => $iType->default, 'type' => strtoupper($iType->type), 'fields' => $iType->args];
 			}
 		}
-		//    Save cache output
+		// Save cache output
 		$descriptor = new EntityDescriptor($name, $fields, $indexes, $class);
 		if( !empty($conf->flags) ) {
 			if( in_array(self::FLAG_ABSTRACT, $conf->flags) ) {
 				$descriptor->setAbstract(true);
 			}
 		}
-		// 		debug('Entity load('.$name.')', $fields);
 		$cache->set($descriptor);
 		return $descriptor;
 	}
@@ -367,7 +363,7 @@ class EntityDescriptor {
 	 *
 	 * @param string $fieldName
 	 * @param string $desc
-	 * @return StdClass
+	 * @return object
 	 * @throws Exception
 	 */
 	public static function parseType($fieldName, $desc) {
@@ -383,14 +379,12 @@ class EntityDescriptor {
 			$result['default'] = $matches[4];
 			if( $result['default'] === 'true' ) {
 				$result['default'] = true;
+			} elseif( $result['default'] === 'false' ) {
+				$result['default'] = false;
 			} else {
-				if( $result['default'] === 'false' ) {
-					$result['default'] = false;
-				} else {
-					$len = strlen($result['default']);
-					if( $len && $result['default'][$len - 1] == ')' ) {
-						$result['default'] = static::parseType($fieldName, $result['default']);
-					}
+				$len = strlen($result['default']);
+				if( $len && $result['default'][$len - 1] == ')' ) {
+					$result['default'] = static::parseType($fieldName, $result['default']);
 				}
 			}
 		}
@@ -589,8 +583,6 @@ class TypeString extends TypeDescriptor {
 	 * @return array
 	 */
 	public function getHTMLAttr($field) {
-		// 		$min	= $field->arg('min');
-		// 		$max	= $field->arg('max');
 		return ['maxlength' => $field->arg('max'), 'type' => 'text'];
 	}
 	
@@ -627,9 +619,6 @@ class TypeDate extends TypeDescriptor {
 	 * @var string
 	 */
 	protected $name = 'date';
-	/*
-	 * Date format is storing a date, not a specific moment, we don't care about timezone
-	 */
 	
 	/**
 	 * @param FieldDescriptor $field The field to validate
@@ -639,13 +628,14 @@ class TypeDate extends TypeDescriptor {
 	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
-		// FR Only for now - Should use user language
+		if( $value instanceof DateTime ) {
+			return;
+		}
 		if( is_id($value) ) {
 			return;
 		}
 		$time = null;
 		if( !is_date($value, false, $time) ) {
-			// 		if( !is_date($value, false, $time) && !is_date($value, false, $time, DATE_FORMAT_SQL) && !is_date($value, true, $time, DATE_FORMAT_GNU) ) {
 			throw new FE('notDate');
 		}
 		// Format to timestamp
@@ -655,10 +645,29 @@ class TypeDate extends TypeDescriptor {
 	/**
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see TypeDescriptor::format()
+	 * @see TypeDescriptor::parseUserValue()
 	 */
-	public function format(FieldDescriptor $field, &$value) {
-		$value = sqlDate($value);
+	public function parseUserValue(FieldDescriptor $field, $value) {
+		return new Date(sqlDate($value));
+	}
+	
+	/**
+	 * @param FieldDescriptor $field The field to parse
+	 * @param string $value The field value to parse
+	 * @see TypeDescriptor::parseUserValue()
+	 */
+	public function formatSqlValue(FieldDescriptor $field, $value) {
+		return sqlDate($value);
+	}
+	
+	/**
+	 * @param FieldDescriptor $field
+	 * @param string $value
+	 * @return Date|null
+	 * @throws Exception
+	 */
+	public function parseSqlValue(FieldDescriptor $field, $value) {
+		return $value && !in_array($value, ['0000-00-00', '0000-00-00 00:00:00']) ? new Date($value) : null;
 	}
 }
 
@@ -719,10 +728,29 @@ class TypeDatetime extends TypeDescriptor {
 	/**
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see TypeDescriptor::format()
+	 * @see TypeDescriptor::parseUserValue()
 	 */
-	public function format(FieldDescriptor $field, &$value) {
-		$value = sqlDatetime($value);
+	public function parseUserValue(FieldDescriptor $field, $value) {
+		return new \Orpheus\Time\DateTime(sqlDatetime($value));
+	}
+	
+	/**
+	 * @param FieldDescriptor $field The field to parse
+	 * @param string $value The field value to parse
+	 * @see TypeDescriptor::parseUserValue()
+	 */
+	public function formatSqlValue(FieldDescriptor $field, $value) {
+		return sqlDatetime($value);
+	}
+	
+	/**
+	 * @param FieldDescriptor $field
+	 * @param string $value
+	 * @return \Orpheus\Time\DateTime|null
+	 * @throws Exception
+	 */
+	public function parseSqlValue(FieldDescriptor $field, $value) {
+		return $value && !in_array($value, ['0000-00-00', '0000-00-00 00:00:00']) ? new \Orpheus\Time\DateTime($value) : null;
 	}
 }
 
@@ -776,10 +804,10 @@ class TypeTime extends TypeString {
 	/**
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see TypeDescriptor::format()
+	 * @see TypeDescriptor::parseUserValue()
 	 */
-	public function format(FieldDescriptor $field, &$value) {
-		$value = strftime(static::$format, mktime($value[1], $value[2]));
+	public function parseUserValue(FieldDescriptor $field, $value) {
+		return strftime(static::$format, mktime($value[1], $value[2]));
 	}
 }
 
@@ -822,10 +850,10 @@ class TypeInteger extends TypeNumber {
 	/**
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see TypeDescriptor::format()
+	 * @see TypeDescriptor::parseUserValue()
 	 */
-	public function format(FieldDescriptor $field, &$value) {
-		$value = (int) $value;
+	public function parseUserValue(FieldDescriptor $field, $value) {
+		return (int) $value;
 	}
 }
 
@@ -1095,10 +1123,10 @@ class TypePassword extends TypeString {
 	/**
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see TypeDescriptor::format()
+	 * @see TypeDescriptor::parseUserValue()
 	 */
-	public function format(FieldDescriptor $field, &$value) {
-		$value = hashString($value);
+	public function parseUserValue(FieldDescriptor $field, $value) {
+		return hashString($value);
 	}
 }
 
@@ -1145,11 +1173,11 @@ class TypePhone extends TypeString {
 	/**
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see TypeDescriptor::format()
+	 * @see TypeDescriptor::parseUserValue()
 	 */
-	public function format(FieldDescriptor $field, &$value) {
+	public function parseUserValue(FieldDescriptor $field, $value) {
 		// FR Only for now - Should use user language
-		$value = standardizePhoneNumber_FR($value, '.', 2);
+		return standardizePhoneNumber_FR($value, '.', 2);
 	}
 }
 
@@ -1371,9 +1399,9 @@ class TypeObject extends TypeString {
 	/**
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see TypeDescriptor::parseValue()
+	 * @see TypeDescriptor::parseSqlValue()
 	 */
-	public function parseValue(FieldDescriptor $field, $value) {
+	public function parseSqlValue(FieldDescriptor $field, $value) {
 		if( is_object($value) ) {
 			return $value;
 		}
@@ -1391,17 +1419,16 @@ class TypeObject extends TypeString {
 		} else {
 			return json_decode($value, false);
 		}
-		// 		return $value;
 	}
 	
 	/**
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see TypeDescriptor::format()
+	 * @see TypeDescriptor::parseUserValue()
 	 */
-	public function format(FieldDescriptor $field, &$value) {
+	public function parseUserValue(FieldDescriptor $field, $value) {
 		if( is_string($value) ) {
-			return;
+			return $value;
 		}
 		/* @var mixed $value */
 		$class = $field->arg('class');
@@ -1409,14 +1436,14 @@ class TypeObject extends TypeString {
 			if( !($value instanceof $class) ) {
 				throw new Exception('Field ' . $field . '\'s value should be an instance of ' . $class . ', got ' . get_class($value));
 			}
-			if( $value instanceof \Serializable ) {
-				$value = $value->serialize();
+			if( $value instanceof Serializable ) {
+				return $value->serialize();
 			} else {
-				$value = serialize($value);
+				return serialize($value);
 			}
 			
 		} else {
-			$value = json_encode($value);
+			return json_encode($value);
 		}
 	}
 }
@@ -1450,10 +1477,10 @@ class TypeCity extends TypeString {
 	/**
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @see TypeDescriptor::format()
+	 * @see TypeDescriptor::parseUserValue()
 	 */
-	public function format(FieldDescriptor $field, &$value) {
-		$value = str_ucwords($value);
+	public function parseUserValue(FieldDescriptor $field, $value) {
+		return str_ucwords($value);
 	}
 }
 
@@ -1543,4 +1570,3 @@ class TypeSlug extends TypeString {
 }
 
 EntityDescriptor::registerType(new TypeSlug());
-

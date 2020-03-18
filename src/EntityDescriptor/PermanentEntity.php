@@ -11,6 +11,7 @@ namespace Orpheus\EntityDescriptor;
 
 use Exception;
 use Orpheus\Publisher\PermanentObject\PermanentObject;
+use Orpheus\Time\DateTime;
 
 /**
  * The permanent entity class
@@ -41,12 +42,20 @@ abstract class PermanentEntity extends PermanentObject {
 	 */
 	protected static $entityClasses = [];
 	
+	/**
+	 * Validator of new field values
+	 *
+	 * @var EntityDescriptor
+	 */
+	protected static $validator = [];
+	
 	// Final class attributes, please inherits them
 	/*
 	protected static $fields	= null;
 	protected static $validator	= null;
 	protected static $domain	= null;
 	*/
+	
 	/**
 	 * Known entities
 	 *
@@ -138,7 +147,7 @@ abstract class PermanentEntity extends PermanentObject {
 	 */
 	public static function init($isFinal = true) {
 		if( static::$validator ) {
-			throw new \Exception('Class ' . static::getClass() . ' with table ' . static::$table . ' is already initialized.');
+			throw new Exception('Class ' . static::getClass() . ' with table ' . static::$table . ' is already initialized.');
 		}
 		if( static::$domain === null ) {
 			static::$domain = static::$table;
@@ -213,12 +222,12 @@ abstract class PermanentEntity extends PermanentObject {
 	 * @param string $name The field name to parse
 	 * @param string $value The field value to parse
 	 * @return string The parse $value
-	 * @see PermanentObject::formatFieldValue()
+	 * @see PermanentObject::formatFieldSqlValue()
 	 */
-	protected static function parseFieldValue($name, $value) {
+	protected static function parseFieldSqlValue($name, $value) {
 		$field = static::$validator->getField($name);
 		if( $field ) {
-			$field->getType()->parseValue($field, $value);
+			return $field->getType()->parseSqlValue($field, $value);
 		}
 		return parent::parseFieldValue($name, $value);
 	}
@@ -231,11 +240,22 @@ abstract class PermanentEntity extends PermanentObject {
 	 * @return string The formatted $Value
 	 * @see PermanentObject::formatValue()
 	 */
-	protected static function formatFieldValue($name, $value) {
+	protected static function formatFieldSqlValue($name, $value) {
 		$field = static::$validator->getField($name);
 		if( $field ) {
-			$field->getType()->formatValue($field, $value);
+			return $field->getType()->formatSqlValue($field, $value);
 		}
-		return parent::formatFieldValue($name, $value);
+		return parent::formatFieldSqlValue($name, $value);
+	}
+	
+	protected static function now($time = null) {
+		return new DateTime(sqlDatetime($time));
+	}
+	
+	public static function onEdit(array &$data, $object) {
+		// Format all fields into SQL values
+		foreach( $data as $key => &$value ) {
+			$value = self::formatFieldSqlValue($key, $value);
+		}
 	}
 }

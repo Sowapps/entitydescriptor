@@ -7,7 +7,7 @@ namespace Orpheus\EntityDescriptor;
 
 /**
  * The FieldDescriptor class
- * 
+ *
  * @author Florent Hazard <contact@sowapps.com>
  *
  */
@@ -15,71 +15,71 @@ class FieldDescriptor {
 	
 	/**
 	 * The field name
-	 * 
+	 *
 	 * @var string
 	 */
 	public $name;
 	
 	/**
 	 * The field type
-	 * 
+	 *
 	 * @var string
 	 */
 	public $type;
 	
 	/**
 	 * The field arguments
-	 * 
+	 *
 	 * @var array
 	 */
 	public $args;
 	
 	/**
 	 * The field's default value
-	 * 
+	 *
 	 * @var mixed
 	 */
 	public $default;
 	
 	/**
 	 * Is this field writable ?
-	 * 
+	 *
 	 * @var boolean
 	 */
 	public $writable;
 	
 	/**
 	 * Is this field nullable ?
-	 * 
+	 *
 	 * @var boolean
 	 */
 	public $nullable;
 	
-	/** 
+	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param string $name
 	 * @param string $type
 	 */
 	public function __construct($name, $type) {
-		$this->name	= $name;
-		$this->type	= $type;
+		$this->name = $name;
+		$this->type = $type;
 	}
 	
-	/** 
+	/**
 	 * Magic toString
-	 * 
+	 *
 	 * @return string
 	 */
 	public function __toString() {
 		return $this->name;
 	}
 	
-	/** 
+	/**
 	 * Get arg value for this field
-	 * 
-	 * @param	$key string The argument key
-	 * @return	string|integer|NULL The argument value
+	 *
+	 * @param    $key string The argument key
+	 * @return    string|integer|NULL The argument value
 	 */
 	public function arg($key) {
 		return isset($this->args->$key) ? $this->args->$key : null;
@@ -87,7 +87,7 @@ class FieldDescriptor {
 	
 	/**
 	 * Get the HTML input tag for this field
-	 * 
+	 *
 	 * @return string
 	 */
 	public function getHTMLInputAttr() {
@@ -96,17 +96,17 @@ class FieldDescriptor {
 	
 	/**
 	 * Get the type of the field
-	 * 
+	 *
 	 * @param TypeDescriptor $type Optional output parameter for the type
 	 * @return TypeDescriptor
 	 */
-	public function getType(&$type=null) {
+	public function getType(&$type = null) {
 		return EntityDescriptor::getType($this->type, $type);
 	}
 	
 	/**
 	 * Get the default value (if this field is NULL)
-	 * 
+	 *
 	 * @return string|integer
 	 */
 	public function getDefault() {
@@ -118,31 +118,31 @@ class FieldDescriptor {
 		return $this->default;
 	}
 	
-	/** 
+	/**
 	 * Parse field type configuration from file string
-	 * 
+	 *
 	 * @param string $fieldName
 	 * @param string|string[] $desc
-	 * @return	FieldDescriptor The parsed field descriptor
+	 * @return FieldDescriptor The parsed field descriptor
 	 */
 	public static function parseType($fieldName, $desc) {
 		if( is_array($desc) ) {
 			$typeDesc = $desc['type'];
 		} else {
 			$typeDesc = $desc;
-			$desc = array();
+			$desc = [];
 		}
-		$parse					= EntityDescriptor::parseType($fieldName, $typeDesc);
+		$parse = EntityDescriptor::parseType($fieldName, $typeDesc);
 		
 		/* Field : String name, TypeDescriptor type, Array args, default, writable, nullable */
-		$field					= new static($fieldName, $parse->type);
-		$TYPE					= $field->getType();
-		$field->args			= $TYPE->parseArgs($parse->args);
-		$field->default			= $parse->default;
+		$field = new static($fieldName, $parse->type);
+		$TYPE = $field->getType();
+		$field->args = $TYPE->parseArgs($parse->args);
+		$field->default = $parse->default;
 		
 		// Type's default
-		$field->writable		= $TYPE->isWritable();
-		$field->nullable		= $TYPE->isNullable();
+		$field->writable = $TYPE->isWritable();
+		$field->nullable = $TYPE->isNullable();
 		
 		// Default if no type's default
 		if( !isset($field->writable) ) {
@@ -172,17 +172,17 @@ class FieldDescriptor {
 	
 	/**
 	 * Build ID field for an entity
-	 * 
+	 *
 	 * @param string $name
-	 * @return \Orpheus\EntityDescriptor\FieldDescriptor
+	 * @return static
 	 */
 	public static function buildIDField($name) {
-		$field				= new static($name, 'ref');
-		$TYPE				= $field->getType();
-		$field->args		= $TYPE->parseArgs(array());
-		$field->default		= null;
-		$field->writable	= false;
-		$field->nullable	= false;
+		$field = new static($name, 'ref');
+		$TYPE = $field->getType();
+		$field->args = $TYPE->parseArgs([]);
+		$field->default = null;
+		$field->writable = false;
+		$field->nullable = false;
 		return $field;
 	}
 }
