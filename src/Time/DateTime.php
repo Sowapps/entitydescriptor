@@ -32,7 +32,7 @@ class DateTime extends VanillaDateTime {
 	 * @return int
 	 */
 	public function getDaysTo(?VanillaDateTime $otherDate = null) {
-		$otherDate ?: new VanillaDateTime();
+		$otherDate = $otherDate ?: new VanillaDateTime();
 		return intval($this->diff($otherDate)->format('%R%a'));
 	}
 	

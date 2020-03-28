@@ -657,7 +657,7 @@ class TypeDate extends TypeDescriptor {
 	 * @see TypeDescriptor::parseUserValue()
 	 */
 	public function formatSqlValue(FieldDescriptor $field, $value) {
-		return sqlDate($value);
+		return $value !== null ? sqlDate($value) : null;
 	}
 	
 	/**
@@ -740,7 +740,7 @@ class TypeDatetime extends TypeDescriptor {
 	 * @see TypeDescriptor::parseUserValue()
 	 */
 	public function formatSqlValue(FieldDescriptor $field, $value) {
-		return sqlDatetime($value);
+		return $value !== null ? sqlDatetime($value) : null;
 	}
 	
 	/**

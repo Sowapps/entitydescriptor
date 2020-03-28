@@ -7,9 +7,9 @@ namespace Orpheus\EntityDescriptor\User;
 
 use Orpheus\Config\Config;
 use Orpheus\EntityDescriptor\PermanentEntity;
+use Orpheus\Exception\NotFoundException;
 use Orpheus\Exception\UserException;
 use Orpheus\Publisher\Exception\UnknownKeyException;
-use Orpheus\SQLAdapter\SQLAdapter;
 
 /**
  * The abstract user class
@@ -25,18 +25,24 @@ abstract class AbstractUser extends PermanentEntity {
 	const NOT_LOGGED = 0;
 	const IS_LOGGED = 1;
 	const LOGGED_FORCED = 3;
+	
+	/** @var string */
+	protected static $userClass;
+	
 	/**
 	 * The table
 	 *
 	 * @var string
 	 */
 	protected static $table = 'user';
+	
 	/**
 	 * The fields of this object
 	 *
 	 * @var array
 	 */
 	protected static $fields = [];
+	
 	/**
 	 * The validator
 	 * The default one is an array system.
@@ -44,58 +50,24 @@ abstract class AbstractUser extends PermanentEntity {
 	 * @var array
 	 */
 	protected static $validator = [];
+	
 	/**
 	 * The domain of this class
 	 * Used as default for translations.
 	 *
-	 * @var unknown
+	 * @var string
 	 */
 	protected static $domain = null;
-	/**
-	 * Is user logged ?
-	 *
-	 * @var boolean
-	 */
-	protected $login = self::NOT_LOGGED;
-	
-	// *** METHODES SURCHARGEES ***
 	
 	/**
 	 * Magic string conversion
 	 *
-	 * @return The string value of this object
+	 * @return string The string value of this object
 	 *
 	 * The string value is the contents of the publication.
 	 */
 	public function __toString() {
 		return $this->fullname;
-	}
-	
-	/**
-	 * Magic method when this object is unserialized
-	 */
-	public function __wakeup() {
-		if( $this->login ) {
-			static::logEvent('activity');
-		}
-	}
-	
-	/**
-	 * Callback when user is connected
-	 */
-	public function onConnected() {
-		
-	}
-	
-	// *** METHODES UTILISATEUR ***
-	
-	/** Gets the Log in status of this user in the current session.
-	 *
-	 * @param string $f
-	 * @return boolean True
-	 */
-	public function isLogin($f = self::IS_LOGGED) {
-		return bintest($this->login, $f);
 	}
 	
 	/**
@@ -130,7 +102,7 @@ abstract class AbstractUser extends PermanentEntity {
 			}
 			$right = $GLOBALS['RIGHTS']->$right;
 		}
-		return ($this->accesslevel >= $right);
+		return $this->accesslevel >= $right;
 	}
 	
 	/**
@@ -143,40 +115,12 @@ abstract class AbstractUser extends PermanentEntity {
 	}
 	
 	/**
-	 * Check if this user can affect data on the given user
-	 *
-	 * @param string $action The action to look for
-	 * @param object $object The object we want to edit
-	 * @return boolean True if this user has enough access level to alter $object (or he is altering himself)
-	 * @see loggedCanDo()
-	 * @see canAlter()
-	 *
-	 * Check if this user can affect $object.
-	 */
-	public function canDo($action, $object = null) {
-		return $this->equals($object) || ($this->checkPerm($action) && (!($object instanceof AbstractUser) || $this->canAlter($object)));
-	}
-	
-	/**
-	 * Check if this user can alter data on the given user
-	 *
-	 * @param AbstractUser $user The user we want to edit
-	 * @return boolean True if this user has enough acess level to edit $user or he is altering himself
-	 * @see loggedCanDo()
-	 *
-	 * Checks if this user can alter on $user.
-	 */
-	public function canAlter(AbstractUser $user) {
-		// 		return $this->equals($user) || !$user->accesslevel || $this->accesslevel > $user->accesslevel;
-		return !$user->accesslevel || $this->accesslevel > $user->accesslevel;
-	}
-	
-	/**
 	 * Logs in an user using data
 	 *
 	 * @param array $data
 	 * @param string $loginField
-	 * @return \Orpheus\SQLRequest\SQLSelectRequest|\Orpheus\EntityDescriptor\User\AbstractUser|\Orpheus\Publisher\PermanentObject\static[]
+	 * @return static
+	 * @throws UserException
 	 */
 	public static function userLogin($data, $loginField = 'email') {
 		if( empty($data[$loginField]) ) {
@@ -187,20 +131,17 @@ abstract class AbstractUser extends PermanentEntity {
 			static::throwException('invalidPassword');
 		}
 		$password = hashString($data['password']);
-		//self::checkForEntry() does not return password and id now.
 		
-		$user = static::get([
-			'where'  => static::formatValue($name) . ' IN (' . implode(',', static::listLoginFields()) . ')',
-			'number' => 1,
-			'output' => SQLAdapter::OBJECT,
-		]);
+		$user = static::get()
+			->where($name, 'IN', '(' . implode(',', static::listLoginFields()) . ')', false)
+			->asObject()->run();
 		if( empty($user) ) {
 			static::throwException("invalidLoginID");
 		}
 		if( isset($user->published) && !$user->published ) {
 			static::throwException('forbiddenLogin');
 		}
-		if( $user->password != $password ) {
+		if( $user->password !== $password ) {
 			static::throwException('wrongPassword');
 		}
 		$user->logout();
@@ -218,63 +159,100 @@ abstract class AbstractUser extends PermanentEntity {
 	}
 	
 	/**
+	 * Log out current user
+	 */
+	public static function userLogout() {
+		$user = static::getLoggedUser();
+		if( $user ) {
+			$user->logout();
+		}
+	}
+	
+	/**
+	 * Get logged user
+	 *
+	 * @return static The user of the current client logged in
+	 */
+	public static function getLoggedUser() {
+		global $USER;// BC - Auto load
+		/** @var static $user */
+		static $user;
+		if( !static::isLogged() ) {
+			return null;
+		}
+		$userId = static::getLoggedUserID();
+		if( !$user || $user->id() != $userId ) {
+			// Non-connected or session has a different user
+			/** @var static $userClass */
+			$userClass = static::getUserClass();
+			$user = $userClass::load($userId);
+			if( !$user ) {
+				// User does no more exist
+				unset($_SESSION['USER_ID']);
+				return null;
+			}
+			$USER = $user;
+			$user->onConnected();
+		}
+		return $user;
+	}
+	
+	/**
+	 * Check if the client is logged in
+	 *
+	 * @return bool True if the current client is logged in
+	 */
+	public static function isLogged() {
+		return !empty($_SESSION['USER_ID']);
+	}
+	
+	/**
+	 * Get ID if user is logged
+	 *
+	 * @return string The id of the current client logged in
+	 *
+	 * Get the ID of the current user or 0.
+	 */
+	public static function getLoggedUserID() {
+		return static::isLogged() ? $_SESSION['USER_ID'] : 0;
+	}
+	
+	/**
+	 * @return string
+	 */
+	public static function getUserClass() {
+		return self::$userClass;
+	}
+	
+	/**
+	 * @param string $userClass
+	 */
+	public static function setUserClass($userClass = null) {
+		self::$userClass = $userClass ?: static::getClass();
+	}
+	
+	/**
+	 * Callback when user is connected
+	 */
+	public function onConnected() {
+	
+	}
+	
+	/**
 	 * Log out this user from the current session.
 	 *
 	 * @param string $reason
 	 * @return boolean
 	 */
 	public function logout($reason = null) {
-		global $USER;
-		if( !$this->login ) {
-			// 			debug('user is not logged in');
+		if( !$this->equals(self::getLoggedUser()) ) {
 			return false;
 		}
-		$this->login = self::NOT_LOGGED;
-		$_SESSION['USER'] = $USER = null;
+		global $USER;
+		$USER = null;
+		unset($_SESSION['USER_ID']);
 		$_SESSION['LOGOUT_REASON'] = $reason;
-		//debug('Session updated');
 		return true;
-	}
-	
-	/**
-	 * Log in this user to the current session.
-	 *
-	 * @param string $force
-	 */
-	public function login($force = false) {
-		if( !$force && static::isLogged() ) {
-			static::throwException('alreadyLoggedin');
-		}
-		/**
-		 * @var AbstractUser $USER
-		 * @deprecated
-		 */
-		global $USER;
-		$_SESSION['USER'] = $USER = $this;
-		$this->login = $force ? self::LOGGED_FORCED : self::IS_LOGGED;
-		if( !$force ) {
-			static::logEvent('login');
-		}
-		static::logEvent('activity');
-	}
-	
-	/**
-	 * Check if the client is logged in
-	 *
-	 * @return True if the current client is logged in
-	 */
-	public static function isLogged() {
-		return !empty($_SESSION['USER']) && $_SESSION['USER']->login;
-	}
-	
-	/**
-	 * Log out current user
-	 */
-	public static function userLogout() {
-		global $USER;
-		if( isset($USER) ) {
-			$USER->logout();
-		}
 	}
 	
 	/**
@@ -304,11 +282,9 @@ abstract class AbstractUser extends PermanentEntity {
 	 * Log in an user from HTTP authentication according to server variables PHP_AUTH_USER and PHP_AUTH_PW
 	 */
 	public static function httpLogin() {
-		$user = static::get([
-			'where'  => 'name LIKE ' . static::formatValue($_SERVER['PHP_AUTH_USER']),
-			// 			'number' => 1,
-			'output' => SQLAdapter::OBJECT,
-		]);
+		$user = static::get()
+			->where('name', $_SERVER['PHP_AUTH_USER'])
+			->asObject()->run();
 		if( empty($user) ) {
 			static::throwNotFound();
 		}
@@ -322,8 +298,8 @@ abstract class AbstractUser extends PermanentEntity {
 	/**
 	 * Hash a password
 	 *
-	 * @param $str The clear password.
-	 * @return The hashed string.
+	 * @param string $str The clear password.
+	 * @return string The hashed string.
 	 * @see hashString()
 	 *
 	 * Hash $str using a salt.
@@ -346,31 +322,25 @@ abstract class AbstractUser extends PermanentEntity {
 	}
 	
 	/**
-	 * Load an user object
+	 * Log in this user to the current session.
 	 *
-	 * @param mixed|mixed[] $id The object ID to load or a valid array of the object's data
-	 * @param boolean $nullable True to silent errors row and return null
-	 * @param boolean $usingCache True to cache load and set cache, false to not cache
-	 * @return    PermanentObject The object
-	 *
-	 * It tries to optimize by getting directly the logged user if he has the same ID.
+	 * @param string $force
 	 */
-	public static function load($id, $nullable = true, $usingCache = true) {
-		if( static::getLoggedUserID() == $id ) {
-			return $GLOBALS['USER'];
+	public function login($force = false) {
+		if( !$force && static::isLogged() ) {
+			static::throwException('alreadyLoggedin');
 		}
-		return parent::load($id, $nullable, $usingCache);
-	}
-	
-	/**
-	 * Get ID if user is logged
-	 *
-	 * @return int|string The id of the current client logged in
-	 *
-	 * Get the ID of the current user or 0.
-	 */
-	public static function getLoggedUserID() {
-		return static::isLogged() ? $_SESSION['USER']->id() : 0;
+		/**
+		 * @var AbstractUser $USER
+		 * @deprecated
+		 */
+		global $USER;
+		$USER = $this;
+		$_SESSION['USER_ID'] = $this->id();
+		if( !$force ) {
+			static::logEvent('login');
+		}
+		static::logEvent('activity');
 	}
 	
 	/**
@@ -382,8 +352,8 @@ abstract class AbstractUser extends PermanentEntity {
 	 * This is often used to determine if the current user can access to the admin panel.
 	 */
 	public static function isAdmin() {
-		global $USER;
-		return (!empty($USER) && $USER->accesslevel > 0);
+		$user = static::getLoggedUser();
+		return $user && $user->checkPerm(1);
 	}
 	
 	/**
@@ -405,18 +375,7 @@ abstract class AbstractUser extends PermanentEntity {
 	}
 	
 	/**
-	 * Get logged user object
-	 *
-	 * @return static The user of the current client logged in
-	 *
-	 * Get the user objectof the current logged client, or null.
-	 */
-	public static function getLoggedUser() {
-		return static::isLogged() ? $_SESSION['USER'] : null;
-	}
-	
-	/**
-	 * Get acesslevel of a role
+	 * Get access level of a role
 	 *
 	 * @param string $role
 	 * @return int
@@ -463,8 +422,36 @@ abstract class AbstractUser extends PermanentEntity {
 	 * @return boolean True if this user can do this $action
 	 */
 	public static function loggedCanDo($action, AbstractUser $object = null) {
-		global $USER;
-		return !empty($USER) && $USER->canDo($action, $object);
+		$user = static::getLoggedUser();
+		return $user && $user->canDo($action, $object);
+	}
+	
+	/**
+	 * Check if this user can affect data on the given user
+	 *
+	 * @param string $action The action to look for
+	 * @param object $object The object we want to edit
+	 * @return boolean True if this user has enough access level to alter $object (or he is altering himself)
+	 * @see loggedCanDo()
+	 * @see canAlter()
+	 *
+	 * Check if this user can affect $object.
+	 */
+	public function canDo($action, $object = null) {
+		return $this->equals($object) || ($this->checkPerm($action) && (!($object instanceof AbstractUser) || $this->canAlter($object)));
+	}
+	
+	/**
+	 * Check if this user can alter data on the given user
+	 *
+	 * @param AbstractUser $user The user we want to edit
+	 * @return boolean True if this user has enough acess level to edit $user or he is altering himself
+	 * @see loggedCanDo()
+	 *
+	 * Checks if this user can alter on $user.
+	 */
+	public function canAlter(AbstractUser $user) {
+		return !$user->accesslevel || $this->accesslevel > $user->accesslevel;
 	}
 	
 	/**
@@ -497,9 +484,9 @@ abstract class AbstractUser extends PermanentEntity {
 		$user = $query->run();
 		if( $user ) {
 			if( $user['email'] === $data['email'] ) {
-				static::throwException("emailAlreadyUsed");
+				static::throwException('emailAlreadyUsed');
 			} else {
-				static::throwException("entryExisting");
+				static::throwException('entryExisting');
 			}
 		}
 	}
@@ -513,4 +500,5 @@ abstract class AbstractUser extends PermanentEntity {
 	public static function generatePassword() {
 		return generatePassword(mt_rand(8, 12));
 	}
+	
 }
