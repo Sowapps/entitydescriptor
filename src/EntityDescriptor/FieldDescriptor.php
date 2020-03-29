@@ -5,6 +5,8 @@
 
 namespace Orpheus\EntityDescriptor;
 
+use stdClass;
+
 /**
  * The FieldDescriptor class
  *
@@ -110,9 +112,9 @@ class FieldDescriptor {
 	 * @return string|integer
 	 */
 	public function getDefault() {
-		if( is_object($this->default) ) {
+		if( $this->default instanceof stdClass ) {
 			$this->default = call_user_func_array($this->default->type, (array) $this->default->args);
-		} elseif( defined($this->default) ) {
+		} elseif( is_string($this->default) && defined($this->default) ) {
 			return constant($this->default);
 		}
 		return $this->default;
