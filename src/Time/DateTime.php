@@ -56,6 +56,16 @@ class DateTime extends VanillaDateTime {
 		return new DateTime(sqlDatetime($this));
 	}
 	
+	/**
+	 * Test this date is after the other one
+	 *
+	 * @param VanillaDateTime $otherDatetime
+	 * @return bool
+	 */
+	public function isAfter(VanillaDateTime $otherDatetime) {
+		return $this->getTimestamp() > $otherDatetime->getTimestamp();
+	}
+	
 	public function __toString() {
 		return dt($this);
 	}
