@@ -1,0 +1,4 @@
+cli:
+    upgrade-database:
+        path: "upgrade-database"
+        controller: "Orpheus\EntityDescriptor\Controller\UpgradeDatabaseCliController"
