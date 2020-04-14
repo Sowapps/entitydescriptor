@@ -83,7 +83,7 @@ abstract class TypeDescriptor {
 	 * @return string[]
 	 */
 	public function getHTMLInputAttr($field) {
-		return array();
+		return [];
 	}
 	
 	/**
@@ -114,7 +114,8 @@ abstract class TypeDescriptor {
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
 	 */
-	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {}
+	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
+	}
 	
 	/**
 	 * Format value before being validated

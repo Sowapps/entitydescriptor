@@ -456,15 +456,11 @@ class TypeNumber extends TypeDescriptor {
 			$args->decimals = $fargs[0];
 			$args->min = $fargs[1];
 			$args->max = $fargs[2];
-		} else {
-			if( isset($fargs[1]) ) {
-				$args->min = $fargs[0];
-				$args->max = $fargs[1];
-			} else {
-				if( isset($fargs[0]) ) {
-					$args->max = $fargs[0];
-				}
-			}
+		} elseif( isset($fargs[1]) ) {
+			$args->min = $fargs[0];
+			$args->max = $fargs[1];
+		} elseif( isset($fargs[0]) ) {
+			$args->max = $fargs[0];
 		}
 		return $args;
 	}
@@ -551,10 +547,8 @@ class TypeString extends TypeDescriptor {
 		if( isset($fargs[1]) ) {
 			$args->min = $fargs[0];
 			$args->max = $fargs[1];
-		} else {
-			if( isset($fargs[0]) ) {
-				$args->max = $fargs[0];
-			}
+		} elseif( isset($fargs[0]) ) {
+			$args->max = $fargs[0];
 		}
 		return $args;
 	}
@@ -839,10 +833,8 @@ class TypeInteger extends TypeNumber {
 		if( isset($fargs[1]) ) {
 			$args->min = $fargs[0];
 			$args->max = $fargs[1];
-		} else {
-			if( isset($fargs[0]) ) {
-				$args->max = $fargs[0];
-			}
+		} elseif( isset($fargs[0]) ) {
+			$args->max = $fargs[0];
 		}
 		return $args;
 	}
@@ -1538,15 +1530,11 @@ class TypeSlug extends TypeString {
 			$args->field = $fargs[0];
 			$args->min = $fargs[1];
 			$args->max = $fargs[2];
-		} else {
-			if( isset($fargs[1]) ) {
-				$args->field = $fargs[0];
-				$args->max = $fargs[1];
-			} else {
-				if( isset($fargs[0]) ) {
-					$args->field = $fargs[0];
-				}
-			}
+		} elseif( isset($fargs[1]) ) {
+			$args->field = $fargs[0];
+			$args->max = $fargs[1];
+		} elseif( isset($fargs[0]) ) {
+			$args->field = $fargs[0];
 		}
 		return $args;
 	}

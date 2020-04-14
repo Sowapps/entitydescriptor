@@ -115,6 +115,46 @@ abstract class AbstractUser extends PermanentEntity {
 	}
 	
 	/**
+	 * Check user can use the role's permission
+	 *
+	 * @param string $role
+	 * @return bool
+	 * @throws UnknownKeyException
+	 */
+	public function hasRoleAccessLevel($role) {
+		return $this->checkPerm(self::getRoleAccesslevel($role));
+	}
+	
+	/**
+	 * Get access level of a role
+	 *
+	 * @param string $role
+	 * @return int
+	 */
+	public static function getRoleAccesslevel($role) {
+		$roles = static::getAppRoles();
+		return $roles[$role];
+	}
+	
+	/**
+	 * Get application roles
+	 *
+	 * @return array
+	 */
+	public static function getAppRoles() {
+		return static::getUserRoles();
+	}
+	
+	/**
+	 * Get all user roles
+	 *
+	 * @return array
+	 */
+	public static function getUserRoles() {
+		return Config::get('user_roles');
+	}
+	
+	/**
 	 * Logs in an user using data
 	 *
 	 * @param array $data
@@ -324,10 +364,14 @@ abstract class AbstractUser extends PermanentEntity {
 	/**
 	 * Log in this user to the current session.
 	 *
-	 * @param string $force
+	 * @param bool|string|null $force
 	 */
 	public function login($force = false) {
 		if( !$force && static::isLogged() ) {
+			if( $force === null ) {
+				// null is silent
+				return;
+			}
 			static::throwException('alreadyLoggedin');
 		}
 		/**
@@ -335,6 +379,13 @@ abstract class AbstractUser extends PermanentEntity {
 		 * @deprecated
 		 */
 		global $USER;
+		if( $force === 'auto' && isset($_SESSION['USER_ID']) && $_SESSION['USER_ID'] === $this->id() ) {
+			// auto does not log the same user again
+			if( isset($this->activity_date) ) {
+				$this->activity_date = now();
+			}
+			return;
+		}
 		$USER = $this;
 		$_SESSION['USER_ID'] = $this->id();
 		if( !$force ) {
@@ -344,16 +395,33 @@ abstract class AbstractUser extends PermanentEntity {
 	}
 	
 	/**
-	 * Check if this user has admin right
-	 *
-	 * @return boolean True if this user is logged and is admin.
-	 *
-	 * Checks if this user has admin access level.
-	 * This is often used to determine if the current user can access to the admin panel.
+	 * @return bool
+	 * @deprecated will evolve to instance's method
 	 */
 	public static function isAdmin() {
+		return static::isUserAdmin();
+	}
+	
+	/**
+	 * Checks if this user has admin access level.
+	 * This is often used to determine if the current user can access to the admin panel.
+	 *
+	 * @return boolean True if this user is logged and is admin
+	 */
+	public static function isUserAdmin() {
 		$user = static::getLoggedUser();
 		return $user && $user->checkPerm(1);
+	}
+	
+	/**
+	 * Get user access
+	 * If anonymous, the user access is -1 (below zero)
+	 *
+	 * @return int
+	 */
+	public static function getUserAccess() {
+		$user = static::getLoggedUser();
+		return $user ? $user->accesslevel : -1;
 	}
 	
 	/**
@@ -372,35 +440,6 @@ abstract class AbstractUser extends PermanentEntity {
 		return (empty($user) && $accesslevel < 0) ||
 			(!empty($user) && $accesslevel >= 0 &&
 				$user instanceof AbstractUser && $user->checkPerm($accesslevel));
-	}
-	
-	/**
-	 * Get access level of a role
-	 *
-	 * @param string $role
-	 * @return int
-	 */
-	public static function getRoleAccesslevel($role) {
-		$roles = static::getAppRoles();
-		return $roles[$role];
-	}
-	
-	/**
-	 * Get application roles
-	 *
-	 * @return array
-	 */
-	public static function getAppRoles() {
-		return static::getUserRoles();
-	}
-	
-	/**
-	 * Get all user roles
-	 *
-	 * @return array
-	 */
-	public static function getUserRoles() {
-		return Config::get('user_roles');
 	}
 	
 	/**

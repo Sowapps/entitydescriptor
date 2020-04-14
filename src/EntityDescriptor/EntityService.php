@@ -81,7 +81,7 @@ class EntityService {
 	public function createItem($input, $fields = null) {
 		$c = $this->getEntityClass();
 		if( $fields == null ) {
-			$fields = $this->getEditableFields();
+			$fields = $this->getEditableFields($input, null);
 		}
 		if( method_exists($c, 'make') ) {
 			return call_user_func([$c, 'make'], $input, $fields);
@@ -89,8 +89,8 @@ class EntityService {
 		return call_user_func([$c, 'create'], $input, $fields);
 	}
 	
-	public function getEditableFields() {
-		return $this->fields ? $this->fields->getEditFields() : call_user_func([$this->getEntityClass(), 'getEditableFields']);
+	public function getEditableFields(array $input, ?PermanentEntity $item) {
+		return $this->fields ? $this->fields->getEditFields() : call_user_func([$this->getEntityClass(), 'getEditableFields'], $input, $item);
 	}
 	
 	/**
@@ -99,26 +99,32 @@ class EntityService {
 	 * @throws Exception
 	 */
 	public function getSelectQuery($filter = null) {
-		/** @var PermanentEntity $c */
-		$c = $this->getEntityClass();
+		/** @var PermanentEntity $entityClass */
+		$entityClass = $this->getEntityClass();
 		/** @var SQLSelectRequest $query */
-		$query = $c::get();
+		$query = $entityClass::get();
 		if( !empty($filter['max']) ) {
 			$query->number($filter['max']);
 			if( !empty($filter['page']) ) {
 				$query->fromOffset($filter['max'] * ($filter['page'] - 1));
 			}
 		}
-		//		if( !empty($filter['search']) && is_array($filter['search']) ) {
-		//			foreach( $filter['search'] as $searchModel => $searchValue ) {
-		//				$query->where($c::getCondition($searchModel, $searchValue));
-		//			}
-		//		}
+		if( !empty($filter['search']) && is_array($filter['search']) ) {
+			foreach( $filter['search'] as $searchModel => $searchValue ) {
+				if( method_exists($entityClass, 'applyFilter') ) {
+					$entityClass::applyFilter($query, $searchModel, $searchValue);
+				} elseif( method_exists($entityClass, 'formatCondition') ) {
+					$query->where($entityClass::formatCondition($searchModel, $searchValue));
+				} else {
+					$query->where($searchModel, $searchValue);
+				}
+			}
+		}
 		return $query;
 	}
 	
 	public function updateItem(PermanentEntity $item, $input, $fields = null) {
-		return $item->update($input, $fields !== null ? $fields : $this->getEditableFields());
+		return $item->update($input, $fields !== null ? $fields : $this->getEditableFields($input, $item));
 	}
 	
 	public function deleteItem(PermanentEntity $item) {
