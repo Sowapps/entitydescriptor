@@ -116,7 +116,7 @@ class EntityService {
 				} elseif( method_exists($entityClass, 'formatCondition') ) {
 					$query->where($entityClass::formatCondition($searchModel, $searchValue));
 				} else {
-					$query->where($searchModel, $searchValue);
+					$query->where($searchModel, 'LIKE', '%' . $searchValue . '%');
 				}
 			}
 		}
