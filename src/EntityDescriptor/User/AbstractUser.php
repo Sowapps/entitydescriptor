@@ -173,7 +173,7 @@ abstract class AbstractUser extends PermanentEntity {
 		$password = hashString($data['password']);
 		
 		$user = static::get()
-			->where($name, 'IN', '(' . implode(',', static::listLoginFields()) . ')', false)
+			->where(static::formatValue($name) . 'IN (' . implode(',', static::listLoginFields()) . ')')
 			->asObject()->run();
 		if( empty($user) ) {
 			static::throwException("invalidLoginID");
