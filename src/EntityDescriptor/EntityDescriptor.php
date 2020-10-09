@@ -1350,7 +1350,11 @@ class TypeState extends TypeEnum {
 		}
 		if( $ref === null ) {
 			$value = key($values);
-		} elseif( !isset($ref->{$field->name}) || !isset($values[$ref->{$field->name}]) || !in_array($value, $values[$ref->{$field->name}]) ) {
+		} elseif(
+			!isset($ref->{$field->name}) || (
+				$ref->{$field->name} !== $value &&
+				(!isset($values[$ref->{$field->name}]) || !in_array($value, $values[$ref->{$field->name}]))
+			) ) {
 			throw new FE('unreachableValue');
 		}
 	}

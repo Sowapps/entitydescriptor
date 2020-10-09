@@ -59,6 +59,8 @@ abstract class AbstractUser extends PermanentEntity {
 	 */
 	protected static $domain = null;
 	
+	protected static $loggedUser;
+	
 	/**
 	 * Magic string conversion
 	 *
@@ -155,6 +157,180 @@ abstract class AbstractUser extends PermanentEntity {
 	}
 	
 	/**
+	 * Use this user as face mask for logged user
+	 *
+	 * @throws UserException
+	 */
+	public function impersonate() {
+		$loggedUser = self::getRealLoggedUser();
+		if( !$loggedUser ) {
+			// Must be logged in to impersonate
+			static::throwException('impersonateRequireLoggedUser');
+		}
+		if( $loggedUser->equals($this) ) {
+			// Can not impersonate my self
+			static::throwException('impersonateRequireAnotherUser');
+		}
+		if( $loggedUser->accesslevel < $this->accesslevel ) {
+			// Can not impersonate an user with more permissions
+			static::throwException('forbiddenImpersonate');
+		}
+		$_SESSION['REAL_USER_ID'] = $loggedUser->id();
+		$_SESSION['USER_ID'] = $this->id();
+		// BC
+		global $USER;
+		$USER = $this;
+		static::$loggedUser = $this;
+	}
+	
+	/**
+	 * Get real logged user if impersonating else then current logged user
+	 *
+	 * @return static
+	 * @throws NotFoundException
+	 * @throws UserException
+	 */
+	public static function getRealLoggedUser() {
+		if( !empty($_SESSION['REAL_USER_ID']) ) {
+			/* @var static $userClass */
+			$userClass = static::getUserClass();
+			return $userClass::load($_SESSION['REAL_USER_ID']);
+		}
+		return self::getLoggedUser();
+	}
+	
+	/**
+	 * @return string
+	 */
+	public static function getUserClass() {
+		return self::$userClass;
+	}
+	
+	/**
+	 * @param string|null $userClass
+	 */
+	public static function setUserClass($userClass = null) {
+		self::$userClass = $userClass ?: static::getClass();
+	}
+	
+	/**
+	 * Get logged user
+	 *
+	 * @return static The user of the current client logged in
+	 */
+	public static function getLoggedUser() {
+		global $USER;// BC - Auto load
+		/** @var static $user */
+		if( !static::isLogged() ) {
+			return null;
+		}
+		$userId = static::getLoggedUserID();
+		if( !static::$loggedUser || static::$loggedUser->id() != $userId ) {
+			// Non-connected or session has a different user
+			/** @var static $userClass */
+			$userClass = static::getUserClass();
+			static::$loggedUser = $userClass::load($userId);
+			if( !static::$loggedUser ) {
+				// User does no more exist
+				unset($_SESSION['USER_ID']);
+				return null;
+			}
+			$USER = static::$loggedUser;
+			static::$loggedUser->onConnected();
+		}
+		return static::$loggedUser;
+	}
+	
+	/**
+	 * Check if the client is logged in
+	 *
+	 * @return bool True if the current client is logged in
+	 */
+	public static function isLogged() {
+		return !empty($_SESSION['USER_ID']);
+	}
+	
+	/**
+	 * Get ID if user is logged
+	 *
+	 * @return string The id of the current client logged in
+	 *
+	 * Get the ID of the current user or 0.
+	 */
+	public static function getLoggedUserID() {
+		return static::isLogged() ? $_SESSION['USER_ID'] : 0;
+	}
+	
+	/**
+	 * Callback when user is connected
+	 */
+	public function onConnected() {
+	
+	}
+	
+	/**
+	 * Log in this user to the current session.
+	 *
+	 * @param bool|string|null $force
+	 */
+	public function login($force = false) {
+		if( !$force && static::isLogged() ) {
+			if( $force === null ) {
+				// null is silent
+				return;
+			}
+			static::throwException('alreadyLoggedin');
+		}
+		/**
+		 * @var AbstractUser $USER
+		 * @deprecated
+		 */
+		global $USER;
+		if( $force === 'auto' && isset($_SESSION['USER_ID']) && $_SESSION['USER_ID'] === $this->id() ) {
+			// auto does not log the same user again
+			if( isset($this->activity_date) ) {
+				$this->activity_date = now();
+			}
+			return;
+		}
+		$USER = $this;
+		$_SESSION['USER_ID'] = $this->id();
+		if( !$force ) {
+			static::logEvent('login');
+		}
+		static::logEvent('activity');
+	}
+	
+	/**
+	 * Terminate the current impersonate
+	 *
+	 * @throws UserException
+	 * @warning We recommend to redirect user just after this action to avoid partial contents
+	 */
+	public static function terminateImpersonate() {
+		if( !static::isImpersonating() ) {
+			// Must be logged in to impersonate
+			static::throwException('terminateImpersonateRequireImpersonate');
+		}
+		$loggedUser = self::getRealLoggedUser();
+		$_SESSION['USER_ID'] = $loggedUser->id();
+		unset($_SESSION['REAL_USER_ID']);
+		// BC
+		global $USER;
+		$USER = $loggedUser;
+		static::$loggedUser = $loggedUser;
+	}
+	
+	/**
+	 * Check if current logged user is impersonating
+	 *
+	 * @return bool
+	 */
+	public static function isImpersonating() {
+		return !empty($_SESSION['REAL_USER_ID']);
+	}
+	
+	/**
 	 * Logs in an user using data
 	 *
 	 * @param array $data
@@ -209,85 +385,13 @@ abstract class AbstractUser extends PermanentEntity {
 	}
 	
 	/**
-	 * Get logged user
-	 *
-	 * @return static The user of the current client logged in
-	 */
-	public static function getLoggedUser() {
-		global $USER;// BC - Auto load
-		/** @var static $user */
-		static $user;
-		if( !static::isLogged() ) {
-			return null;
-		}
-		$userId = static::getLoggedUserID();
-		if( !$user || $user->id() != $userId ) {
-			// Non-connected or session has a different user
-			/** @var static $userClass */
-			$userClass = static::getUserClass();
-			$user = $userClass::load($userId);
-			if( !$user ) {
-				// User does no more exist
-				unset($_SESSION['USER_ID']);
-				return null;
-			}
-			$USER = $user;
-			$user->onConnected();
-		}
-		return $user;
-	}
-	
-	/**
-	 * Check if the client is logged in
-	 *
-	 * @return bool True if the current client is logged in
-	 */
-	public static function isLogged() {
-		return !empty($_SESSION['USER_ID']);
-	}
-	
-	/**
-	 * Get ID if user is logged
-	 *
-	 * @return string The id of the current client logged in
-	 *
-	 * Get the ID of the current user or 0.
-	 */
-	public static function getLoggedUserID() {
-		return static::isLogged() ? $_SESSION['USER_ID'] : 0;
-	}
-	
-	/**
-	 * @return string
-	 */
-	public static function getUserClass() {
-		return self::$userClass;
-	}
-	
-	/**
-	 * @param string $userClass
-	 */
-	public static function setUserClass($userClass = null) {
-		self::$userClass = $userClass ?: static::getClass();
-	}
-	
-	/**
-	 * Callback when user is connected
-	 */
-	public function onConnected() {
-	
-	}
-	
-	/**
 	 * Log out this user from the current session.
 	 *
 	 * @param string $reason
 	 * @return boolean
 	 */
 	public function logout($reason = null) {
-		if( !$this->equals(self::getLoggedUser()) ) {
-			return false;
-		}
+		// Log out any user
 		global $USER;
 		$USER = null;
 		unset($_SESSION['USER_ID']);
@@ -359,39 +463,6 @@ abstract class AbstractUser extends PermanentEntity {
 	 */
 	public static function httpCreate() {
 		return static::createAndGet(['name' => $_SERVER['PHP_AUTH_USER'], 'password' => $_SERVER['PHP_AUTH_PW']]);
-	}
-	
-	/**
-	 * Log in this user to the current session.
-	 *
-	 * @param bool|string|null $force
-	 */
-	public function login($force = false) {
-		if( !$force && static::isLogged() ) {
-			if( $force === null ) {
-				// null is silent
-				return;
-			}
-			static::throwException('alreadyLoggedin');
-		}
-		/**
-		 * @var AbstractUser $USER
-		 * @deprecated
-		 */
-		global $USER;
-		if( $force === 'auto' && isset($_SESSION['USER_ID']) && $_SESSION['USER_ID'] === $this->id() ) {
-			// auto does not log the same user again
-			if( isset($this->activity_date) ) {
-				$this->activity_date = now();
-			}
-			return;
-		}
-		$USER = $this;
-		$_SESSION['USER_ID'] = $this->id();
-		if( !$force ) {
-			static::logEvent('login');
-		}
-		static::logEvent('activity');
 	}
 	
 	/**
