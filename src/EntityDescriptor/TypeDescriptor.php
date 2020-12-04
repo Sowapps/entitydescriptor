@@ -23,7 +23,7 @@ abstract class TypeDescriptor {
 	 *
 	 * @var string
 	 */
-	protected $name;
+	protected string $name;
 	
 	/**
 	 * Is this type writable ?

@@ -49,13 +49,6 @@ abstract class PermanentEntity extends PermanentObject {
 	 */
 	protected static $validator = [];
 	
-	// Final class attributes, please inherits them
-	/*
-	protected static $fields	= null;
-	protected static $validator	= null;
-	protected static $domain	= null;
-	*/
-	
 	/**
 	 * Known entities
 	 *

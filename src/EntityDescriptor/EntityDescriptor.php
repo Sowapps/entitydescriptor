@@ -49,7 +49,7 @@ class EntityDescriptor {
 	 *
 	 * @var string
 	 */
-	protected $name;
+	protected string $name;
 	
 	/**
 	 * The entity's version
@@ -146,12 +146,12 @@ class EntityDescriptor {
 	 * Validate input
 	 *
 	 * @param array $input
-	 * @param array $fields
-	 * @param PermanentEntity $ref
+	 * @param array|null $fields
+	 * @param PermanentEntity|null $ref
 	 * @param int $errCount
 	 * @return array
 	 */
-	public function validate(array &$input, $fields = null, $ref = null, &$errCount = 0) {
+	public function validate(array &$input, $fields = null, $ref = null, &$errCount = 0, $ignoreRequired = false) {
 		$data = [];
 		foreach( $this->fields as $fieldName => &$fData ) {
 			try {
@@ -171,11 +171,14 @@ class EntityDescriptor {
 				}
 				$this->validateFieldValue($fieldName, $input[$fieldName], $input, $ref);
 				// PHP does not make difference between 0 and NULL, so every non-null value is different from null.
-				if( !isset($ref) || ($ref->getValue($fieldName) === null XOR $input[$fieldName] === null) || $input[$fieldName] != $ref->getValue($fieldName) ) {
+				if( !isset($ref) || ($ref->getValue($fieldName) === null xor $input[$fieldName] === null) || $input[$fieldName] != $ref->getValue($fieldName) ) {
 					$data[$fieldName] = $input[$fieldName];
 				}
 				
 			} catch( UserException $e ) {
+				if( $ignoreRequired === true || (is_array($ignoreRequired) && in_array($fieldName, $ignoreRequired)) ) {
+					continue;
+				}
 				$errCount++;
 				if( isset($this->class) ) {
 					/** @var PermanentObject $c */
@@ -324,8 +327,8 @@ class EntityDescriptor {
 				}
 			}
 		}
-		$IDField = $class ? $class::getIDField() : self::IDFIELD;
-		$fields[$IDField] = FieldDescriptor::buildIDField($IDField);
+		$idField = $class ? $class::getIDField() : self::IDFIELD;
+		$fields[$idField] = FieldDescriptor::buildIDField($idField);
 		foreach( $conf->fields as $fieldName => $fieldInfos ) {
 			$fields[$fieldName] = FieldDescriptor::parseType($fieldName, $fieldInfos);
 		}
@@ -444,7 +447,7 @@ class TypeNumber extends TypeDescriptor {
 	 *
 	 * @var string
 	 */
-	protected $name = 'number';
+	protected string $name = 'number';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -536,7 +539,7 @@ class TypeString extends TypeDescriptor {
 	 *
 	 * @var string
 	 */
-	protected $name = 'string';
+	protected string $name = 'string';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -612,7 +615,7 @@ class TypeDate extends TypeDescriptor {
 	 *
 	 * @var string
 	 */
-	protected $name = 'date';
+	protected string $name = 'date';
 	
 	/**
 	 * @param FieldDescriptor $field The field to validate
@@ -680,7 +683,7 @@ class TypeDatetime extends TypeDescriptor {
 	 *
 	 * @var string
 	 */
-	protected $name = 'datetime';
+	protected string $name = 'datetime';
 	/*
 	 * Date format is storing a date, not a specific moment, we don't care about timezone
 	 */
@@ -772,7 +775,7 @@ class TypeTime extends TypeString {
 	 *
 	 * @var string
 	 */
-	protected $name = 'time';
+	protected string $name = 'time';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -822,7 +825,7 @@ class TypeInteger extends TypeNumber {
 	 *
 	 * @var string
 	 */
-	protected $name = 'integer';
+	protected string $name = 'integer';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -845,7 +848,17 @@ class TypeInteger extends TypeNumber {
 	 * @see TypeDescriptor::parseUserValue()
 	 */
 	public function parseUserValue(FieldDescriptor $field, $value) {
-		return (int) $value;
+		return intval($value);
+	}
+	
+	/**
+	 * @param FieldDescriptor $field
+	 * @param string $value
+	 * @return int|null
+	 * @throws Exception
+	 */
+	public function parseSqlValue(FieldDescriptor $field, $value) {
+		return $value !== null ? intval($value) : null;
 	}
 }
 
@@ -864,7 +877,7 @@ class TypeBoolean extends TypeInteger {
 	 *
 	 * @var string
 	 */
-	protected $name = 'boolean';
+	protected string $name = 'boolean';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -902,7 +915,7 @@ class TypeFloat extends TypeNumber {
 	 *
 	 * @var string
 	 */
-	protected $name = 'float';
+	protected string $name = 'float';
 	
 	// Format float([[max=2147483647, min=-2147483648], [decimals=2]]])
 	
@@ -941,7 +954,7 @@ class TypeDouble extends TypeNumber {
 	 *
 	 * @var string
 	 */
-	protected $name = 'double';
+	protected string $name = 'double';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -978,7 +991,7 @@ class TypeNatural extends TypeInteger {
 	 *
 	 * @var string
 	 */
-	protected $name = 'natural';
+	protected string $name = 'natural';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -1008,7 +1021,7 @@ class TypeRef extends TypeNatural {
 	 *
 	 * @var string
 	 */
-	protected $name = 'ref';
+	protected string $name = 'ref';
 	// 	protected $nullable	= false;
 	// MySQL needs more logic to select a null field with an index
 	// Prefer to set default to 0 instead of using nullable
@@ -1053,7 +1066,7 @@ class TypeEmail extends TypeString {
 	 *
 	 * @var string
 	 */
-	protected $name = 'email';
+	protected string $name = 'email';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -1096,7 +1109,7 @@ class TypePassword extends TypeString {
 	 *
 	 * @var string
 	 */
-	protected $name = 'password';
+	protected string $name = 'password';
 	
 	/**
 	 * @param FieldDescriptor $field The field to validate
@@ -1137,7 +1150,7 @@ class TypePhone extends TypeString {
 	 *
 	 * @var string
 	 */
-	protected $name = 'phone';
+	protected string $name = 'phone';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -1188,7 +1201,7 @@ class TypeURL extends TypeString {
 	 *
 	 * @var string
 	 */
-	protected $name = 'url';
+	protected string $name = 'url';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -1228,7 +1241,7 @@ class TypeIP extends TypeString {
 	 *
 	 * @var string
 	 */
-	protected $name = 'ip';
+	protected string $name = 'ip';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -1272,7 +1285,7 @@ class TypeEnum extends TypeString {
 	 *
 	 * @var string
 	 */
-	protected $name = 'enum';
+	protected string $name = 'enum';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -1326,7 +1339,7 @@ class TypeState extends TypeEnum {
 	 *
 	 * @var string
 	 */
-	protected $name = 'state';
+	protected string $name = 'state';
 	
 	/*
 	 DEFAULT VALUE SHOULD BE THE FIRST OF SOURCE
@@ -1375,7 +1388,7 @@ class TypeObject extends TypeString {
 	 *
 	 * @var string
 	 */
-	protected $name = 'object';
+	protected string $name = 'object';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -1459,7 +1472,7 @@ class TypeCity extends TypeString {
 	 *
 	 * @var string
 	 */
-	protected $name = 'city';
+	protected string $name = 'city';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -1495,7 +1508,7 @@ class TypePostalCode extends TypeInteger {
 	 *
 	 * @var string
 	 */
-	protected $name = 'postalcode';
+	protected string $name = 'postalcode';
 	
 	/**
 	 * @param string[] $fargs Arguments
@@ -1522,7 +1535,7 @@ class TypeSlug extends TypeString {
 	 *
 	 * @var string
 	 */
-	protected $name = 'slug';
+	protected string $name = 'slug';
 	
 	/**
 	 * @param string[] $fargs Arguments

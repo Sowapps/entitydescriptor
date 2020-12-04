@@ -351,7 +351,7 @@ abstract class AbstractUser extends PermanentEntity {
 		$user = static::get()
 			->where(static::formatValue($name) . 'IN (' . implode(',', static::listLoginFields()) . ')')
 			->asObject()->run();
-		if( empty($user) ) {
+		if( !$user ) {
 			static::throwException("invalidLoginID");
 		}
 		if( isset($user->published) && !$user->published ) {
