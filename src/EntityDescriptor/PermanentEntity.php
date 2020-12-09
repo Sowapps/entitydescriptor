@@ -10,6 +10,8 @@
 namespace Orpheus\EntityDescriptor;
 
 use Exception;
+use Orpheus\Exception\NotFoundException;
+use Orpheus\Exception\UserException;
 use Orpheus\Publisher\PermanentObject\PermanentObject;
 use Orpheus\Time\DateTime;
 
@@ -156,17 +158,34 @@ abstract class PermanentEntity extends PermanentObject {
 	/**
 	 * Get entity instance by type and id
 	 *
-	 * @param string $objType
-	 * @param string $objID
+	 * @param string|PermanentEntity $entityType
+	 * @param int $entityId
 	 * @return PermanentEntity
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
-	public static function getEntityObject($objType, $objID = null) {
-		if( is_object($objType) ) {
-			$objID = $objType->entity_id;
-			$objType = $objType->entity_type;
+	public static function findEntityObject($entityType, $entityId = null): PermanentEntity {
+		if( $entityType instanceof PermanentEntity ) {
+			$entityId = $entityType->entity_id;
+			$entityType = $entityType->entity_type;
 		}
-		$class = isset(static::$entityClasses[$objType]) ? static::$entityClasses[$objType] : $objType;
-		return $class::load($objID);
+		$class = null;
+		if( isset(static::$entityClasses[$entityType]) ) {
+			// In loaded classes
+			$class = static::$entityClasses[$entityType];
+		} else {
+			// Not in loaded classes, try to load all to find it
+			foreach( self::$knownEntities as $entityClass => $state ) {
+				/** @var PermanentEntity $entityClass */
+				if( $entityClass::getEntity() === $entityType ) {
+					$class = $entityClass;
+				}
+			}
+		}
+		if( !$class ) {
+			self::throwNotFound();
+		}
+		return $class::load($entityId, false);
 	}
 	
 	/**
