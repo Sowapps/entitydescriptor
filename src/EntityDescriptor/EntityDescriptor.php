@@ -5,7 +5,7 @@
 
 namespace Orpheus\EntityDescriptor;
 
-use DateTime;
+use DateTime as VanillaDateTime;
 use Exception;
 use Orpheus\Cache\FSCache;
 use Orpheus\Config\YAML\YAML;
@@ -14,6 +14,7 @@ use Orpheus\Publisher\Exception\InvalidFieldException;
 use Orpheus\Publisher\PermanentObject\PermanentObject;
 use Orpheus\Publisher\SlugGenerator;
 use Orpheus\Time\Date;
+use Orpheus\Time\DateTime;
 
 /**
  * A class to describe an entity
@@ -625,18 +626,17 @@ class TypeDate extends TypeDescriptor {
 	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
-		if( $value instanceof DateTime ) {
+		if( $value instanceof VanillaDateTime ) {
 			return;
 		}
 		if( is_id($value) ) {
 			return;
 		}
-		$time = null;
-		if( !is_date($value, false, $time) ) {
+		$dateTime = null;
+		if( !is_date($value, false, $dateTime) ) {
 			throw new FE('notDate');
 		}
-		// Format to timestamp
-		$value = $time;
+		$value = $dateTime;
 	}
 	
 	/**
@@ -703,23 +703,22 @@ class TypeDatetime extends TypeDescriptor {
 		if( is_id($value) ) {
 			return;
 		}
-		$time = null;
+		$dateTime = null;
 		// TODO: Find a better way to check all formats
 		// We now check first char for system dates
 		if( $value[0] === '@' ) {
-			$time = substr($value, 1);
+			$dateTime = substr($value, 1);
 		} else {
 			$format = null;
 			if( $value[0] === '$' ) {
 				$value = substr($value, 1);
 				$format = DATE_FORMAT_GNU;
 			}
-			if( !is_date($value, true, $time, $format) ) {
+			if( !is_date($value, true, $dateTime, $format) ) {
 				throw new FE('notDatetime');
 			}
 		}
-		// Format to timestamp
-		$value = $time;
+		$value = $dateTime;
 	}
 	
 	/**
@@ -728,7 +727,7 @@ class TypeDatetime extends TypeDescriptor {
 	 * @see TypeDescriptor::parseUserValue()
 	 */
 	public function parseUserValue(FieldDescriptor $field, $value) {
-		return new \Orpheus\Time\DateTime(sqlDatetime($value));
+		return new DateTime(sqlDatetime($value));
 	}
 	
 	/**
@@ -747,7 +746,7 @@ class TypeDatetime extends TypeDescriptor {
 	 * @throws Exception
 	 */
 	public function parseSqlValue(FieldDescriptor $field, $value) {
-		return $value && !in_array($value, ['0000-00-00', '0000-00-00 00:00:00']) ? new \Orpheus\Time\DateTime($value) : null;
+		return $value && !in_array($value, ['0000-00-00', '0000-00-00 00:00:00']) ? new DateTime($value) : null;
 	}
 }
 
