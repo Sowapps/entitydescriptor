@@ -275,7 +275,7 @@ class EntityDescriptor {
 		$entities = cleanscandir(pathOf(CONFDIR . ENTITY_DESCRIPTOR_CONFIG_PATH));
 		foreach( $entities as $i => &$filename ) {
 			$pi = pathinfo($filename);
-			if( $pi['extension'] != 'yaml' ) {
+			if( $pi['extension'] !== 'yaml' ) {
 				unset($entities[$i]);
 				continue;
 			}
@@ -313,7 +313,7 @@ class EntityDescriptor {
 		
 		$conf = YAML::build($descriptorPath, true);
 		if( empty($conf->fields) ) {
-			throw new \Exception('Descriptor file for "' . $name . '" is corrupted, empty or not found, there is no field.');
+			throw new Exception('Descriptor file for "' . $name . '" is corrupted, empty or not found, there is no field.');
 		}
 		// Build descriptor
 		$fields = [];
@@ -328,6 +328,7 @@ class EntityDescriptor {
 				}
 			}
 		}
+		/** @var PermanentEntity $class */
 		$idField = $class ? $class::getIDField() : self::IDFIELD;
 		$fields[$idField] = FieldDescriptor::buildIDField($idField);
 		foreach( $conf->fields as $fieldName => $fieldInfos ) {
@@ -1119,7 +1120,7 @@ class TypePassword extends TypeString {
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
 		parent::validate($field, $value, $input, $ref);
-		if( empty($input[$field->name . '_conf']) || $value != $input[$field->name . '_conf'] ) {
+		if( empty($input[$field->name . '_conf']) || $value !== $input[$field->name . '_conf'] ) {
 			throw new FE('invalidConfirmation');
 		}
 	}

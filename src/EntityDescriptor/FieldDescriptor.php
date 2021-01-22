@@ -32,7 +32,7 @@ class FieldDescriptor {
 	/**
 	 * The field arguments
 	 *
-	 * @var array
+	 * @var stdClass
 	 */
 	public $args;
 	
