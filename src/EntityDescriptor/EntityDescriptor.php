@@ -113,6 +113,7 @@ class EntityDescriptor {
 	 */
 	public function setAbstract($abstract) {
 		$this->abstract = $abstract;
+		
 		return $this;
 	}
 	
@@ -150,6 +151,7 @@ class EntityDescriptor {
 	 * @param array|null $fields
 	 * @param PermanentEntity|null $ref
 	 * @param int $errCount
+	 * @param bool $ignoreRequired
 	 * @return array
 	 */
 	public function validate(array &$input, $fields = null, $ref = null, &$errCount = 0, $ignoreRequired = false) {
@@ -177,7 +179,7 @@ class EntityDescriptor {
 				}
 				
 			} catch( UserException $e ) {
-				if( $ignoreRequired === true || (is_array($ignoreRequired) && in_array($fieldName, $ignoreRequired)) ) {
+				if( ($e instanceof InvalidFieldException && $e->getKey() === 'requiredField') && ($ignoreRequired === true || (is_array($ignoreRequired) && in_array($fieldName, $ignoreRequired))) ) {
 					continue;
 				}
 				$errCount++;
@@ -190,6 +192,7 @@ class EntityDescriptor {
 				}
 			}
 		}
+		
 		return $data;
 	}
 	
@@ -198,9 +201,9 @@ class EntityDescriptor {
 	 *
 	 * @param string $fieldName The field to use
 	 * @param mixed $value input|output value to validate for this field
-	 * @param    $input string[]
+	 * @param string[] $input
 	 * @param PermanentEntity $ref
-	 * @throws    InvalidFieldException
+	 * @throws InvalidFieldException
 	 */
 	public function validateFieldValue($fieldName, &$value, $input = [], $ref = null) {
 		if( !isset($this->fields[$fieldName]) ) {
@@ -224,6 +227,7 @@ class EntityDescriptor {
 				// Reject null value
 				throw new InvalidFieldException('requiredField', $fieldName, $value, null, $this->name);
 			}
+			
 			// We will format valid null value later (in formatter)
 			return;
 		}
@@ -263,6 +267,7 @@ class EntityDescriptor {
 		foreach( static::getAllEntities() as $entity ) {
 			$entities[$entity] = EntityDescriptor::load($entity);
 		}
+		
 		return $entities;
 	}
 	
@@ -281,6 +286,7 @@ class EntityDescriptor {
 			}
 			$filename = $pi['filename'];
 		}
+		
 		return $entities;
 	}
 	
@@ -351,6 +357,7 @@ class EntityDescriptor {
 			}
 		}
 		$cache->set($descriptor);
+		
 		return $descriptor;
 	}
 	
@@ -393,6 +400,7 @@ class EntityDescriptor {
 				}
 			}
 		}
+		
 		return (object) $result;
 	}
 	
@@ -418,8 +426,10 @@ class EntityDescriptor {
 			throw new Exception('unknownType_' . $name);
 		}
 		$type = &static::$types[$name];
+		
 		return $type;
 	}
+	
 }
 
 /**
@@ -429,6 +439,7 @@ class EntityDescriptor {
  *
  */
 class FE extends Exception {
+
 }
 
 defifn('ENTITY_DESCRIPTOR_CONFIG_PATH', 'entities/');
@@ -442,6 +453,7 @@ defifn('ENTITY_DESCRIPTOR_CONFIG_PATH', 'entities/');
  *
  */
 class TypeNumber extends TypeDescriptor {
+	
 	// Format number([max=2147483647 [, min=-2147483648 [, decimals=0]]])
 	
 	/**
@@ -467,6 +479,7 @@ class TypeNumber extends TypeDescriptor {
 		} elseif( isset($fargs[0]) ) {
 			$args->max = $fargs[0];
 		}
+		
 		return $args;
 	}
 	
@@ -499,6 +512,7 @@ class TypeNumber extends TypeDescriptor {
 		$min = $field->arg('min');
 		$max = $field->arg('max');
 		$decimals = $field->arg('decimals');
+		
 		return ['maxlength' => max(static::getMaxLengthOf($min, $decimals), static::getMaxLengthOf($max, $decimals)), 'min' => $min, 'max' => $max, 'type' => 'number'];
 	}
 	
@@ -521,6 +535,7 @@ class TypeNumber extends TypeDescriptor {
 	public function htmlInputAttr($args) {
 		return ' maxlength="' . max(static::getMaxLengthOf($args->min, $args->decimals), static::getMaxLengthOf($args->max, $args->decimals)) . '"';
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeNumber());
@@ -555,6 +570,7 @@ class TypeString extends TypeDescriptor {
 		} elseif( isset($fargs[0]) ) {
 			$args->max = $fargs[0];
 		}
+		
 		return $args;
 	}
 	
@@ -600,6 +616,7 @@ class TypeString extends TypeDescriptor {
 	public function emptyIsNull($field) {
 		return $field->args->min > 0;
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeString());
@@ -667,6 +684,7 @@ class TypeDate extends TypeDescriptor {
 	public function parseSqlValue(FieldDescriptor $field, $value) {
 		return $value && !in_array($value, ['0000-00-00', '0000-00-00 00:00:00']) ? new Date($value) : null;
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeDate());
@@ -749,6 +767,7 @@ class TypeDatetime extends TypeDescriptor {
 	public function parseSqlValue(FieldDescriptor $field, $value) {
 		return $value && !in_array($value, ['0000-00-00', '0000-00-00 00:00:00']) ? new DateTime($value) : null;
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeDatetime());
@@ -806,6 +825,7 @@ class TypeTime extends TypeString {
 	public function parseUserValue(FieldDescriptor $field, $value) {
 		return strftime(static::$format, mktime($value[1], $value[2]));
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeTime());
@@ -839,6 +859,7 @@ class TypeInteger extends TypeNumber {
 		} elseif( isset($fargs[0]) ) {
 			$args->max = $fargs[0];
 		}
+		
 		return $args;
 	}
 	
@@ -860,6 +881,7 @@ class TypeInteger extends TypeNumber {
 	public function parseSqlValue(FieldDescriptor $field, $value) {
 		return $value !== null ? intval($value) : null;
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeInteger());
@@ -898,6 +920,7 @@ class TypeBoolean extends TypeInteger {
 		$value = (int) !empty($value);
 		parent::validate($field, $value, $input, $ref);
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeBoolean());
@@ -935,8 +958,10 @@ class TypeFloat extends TypeNumber {
 		} elseif( isset($fargs[0]) ) {
 			$args->decimals = $fargs[0];
 		}
+		
 		return $args;
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeFloat());
@@ -972,8 +997,10 @@ class TypeDouble extends TypeNumber {
 		} elseif( isset($fargs[0]) ) {
 			$args->decimals = $fargs[0];
 		}
+		
 		return $args;
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeDouble());
@@ -1002,8 +1029,10 @@ class TypeNatural extends TypeInteger {
 		if( isset($fargs[0]) ) {
 			$args->max = $fargs[0];
 		}
+		
 		return $args;
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeNatural());
@@ -1035,6 +1064,7 @@ class TypeRef extends TypeNatural {
 		if( isset($fargs[0]) ) {
 			$args->entity = $fargs[0];
 		}
+		
 		return $args;
 	}
 	
@@ -1049,6 +1079,7 @@ class TypeRef extends TypeNatural {
 		id($value);
 		parent::validate($field, $value, $input, $ref);
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeRef());
@@ -1089,6 +1120,7 @@ class TypeEmail extends TypeString {
 			throw new FE('notEmail');
 		}
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeEmail());
@@ -1133,6 +1165,7 @@ class TypePassword extends TypeString {
 	public function parseUserValue(FieldDescriptor $field, $value) {
 		return hashString($value);
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypePassword());
@@ -1184,6 +1217,7 @@ class TypePhone extends TypeString {
 		// FR Only for now - Should use user language
 		return standardizePhoneNumber_FR($value, '.', 2);
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypePhone());
@@ -1224,6 +1258,7 @@ class TypeURL extends TypeString {
 			throw new FE('notURL');
 		}
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeURL());
@@ -1252,6 +1287,7 @@ class TypeIP extends TypeString {
 		if( isset($fargs[0]) ) {
 			$args->version = $fargs[0];
 		}
+		
 		return $args;
 	}
 	
@@ -1268,6 +1304,7 @@ class TypeIP extends TypeString {
 			throw new FE('notIPAddress');
 		}
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeIP());
@@ -1296,6 +1333,7 @@ class TypeEnum extends TypeString {
 		if( isset($fargs[0]) ) {
 			$args->source = $fargs[0];
 		}
+		
 		return $args;
 	}
 	
@@ -1312,16 +1350,14 @@ class TypeEnum extends TypeString {
 			return;
 		}
 		$values = call_user_func($field->args->source, $input, $ref);
-		if( is_id($value) ) {
-			if( !isset($values[$value]) ) {
-				throw new FE('notEnumValue');
-			}
+		if( ctype_digit($value) && isset($values[$value]) ) {
 			// Get the real enum value from index
 			$value = $values[$value];
 		} elseif( !isset($values[$value]) && !in_array($value, $values) ) {
 			throw new FE('notEnumValue');
 		}
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeEnum());
@@ -1371,6 +1407,7 @@ class TypeState extends TypeEnum {
 			throw new FE('unreachableValue');
 		}
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeState());
@@ -1402,6 +1439,7 @@ class TypeObject extends TypeString {
 				$args->class = null;
 			}
 		}
+		
 		return $args;
 	}
 	
@@ -1420,6 +1458,7 @@ class TypeObject extends TypeString {
 			if( array_key_exists('Serializable', class_implements($class, true)) ) {
 				$obj = new $class();
 				$obj->unserialize($value);
+				
 				return $obj;
 			} else {
 				return unserialize($value);
@@ -1455,6 +1494,7 @@ class TypeObject extends TypeString {
 			return json_encode($value);
 		}
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeObject());
@@ -1480,6 +1520,7 @@ class TypeCity extends TypeString {
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) ['min' => 3, 'max' => 30];
+		
 		return $args;
 	}
 	
@@ -1491,6 +1532,7 @@ class TypeCity extends TypeString {
 	public function parseUserValue(FieldDescriptor $field, $value) {
 		return str_ucwords($value);
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeCity());
@@ -1516,8 +1558,10 @@ class TypePostalCode extends TypeInteger {
 	 */
 	public function parseArgs(array $fargs) {
 		$args = (object) ['decimals' => 0, 'min' => 10000, 'max' => 99999];
+		
 		return $args;
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypePostalCode());
@@ -1553,6 +1597,7 @@ class TypeSlug extends TypeString {
 		} elseif( isset($fargs[0]) ) {
 			$args->field = $fargs[0];
 		}
+		
 		return $args;
 	}
 	
@@ -1570,8 +1615,10 @@ class TypeSlug extends TypeString {
 			$slugGenerator = new SlugGenerator();
 			$value = $slugGenerator->format($otherValue);
 		}
+		
 		return parent::validate($field, $value, $input, $ref);
 	}
+	
 }
 
 EntityDescriptor::registerType(new TypeSlug());
