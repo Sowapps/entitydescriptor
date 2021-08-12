@@ -2,6 +2,7 @@
 
 namespace Orpheus\EntityDescriptor\Controller;
 
+use Exception;
 use Orpheus\EntityDescriptor\EntityDescriptor;
 use Orpheus\EntityDescriptor\SQLGenerator\SQLGeneratorMySQL;
 use Orpheus\InputController\CLIController\CLIController;
@@ -18,14 +19,18 @@ class UpgradeDatabaseCliController extends CLIController {
 	/**
 	 * @param CLIRequest $request The input CLI request
 	 * @return CLIResponse
+	 * @throws Exception
 	 */
-	public function run($request) {
+	public function run($request): CLIResponse {
 		
 		$generator = new SQLGeneratorMySQL();
 		
 		$query = '';
 		foreach( EntityDescriptor::getAllEntities() as $entity ) {
-			$query .= strip_tags($generator->matchEntity(EntityDescriptor::load($entity)));
+			$entityQuery = strip_tags($generator->matchEntity(EntityDescriptor::load($entity)));
+			if( $entityQuery ) {
+				$query .= ($query ? "\n\n" : '') . $entityQuery;
+			}
 		}
 		
 		if( !$query ) {
