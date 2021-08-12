@@ -258,6 +258,15 @@ class EntityDescriptor {
 	}
 	
 	/**
+	 * Get all fields
+	 *
+	 * @return FieldDescriptor[]
+	 */
+	public function getFields() {
+		return $this->fields;
+	}
+	
+	/**
 	 * Get all available entity descriptor
 	 *
 	 * @return EntityDescriptor[]
@@ -362,15 +371,6 @@ class EntityDescriptor {
 	}
 	
 	/**
-	 * Get all fields
-	 *
-	 * @return FieldDescriptor[]
-	 */
-	public function getFields() {
-		return $this->fields;
-	}
-	
-	/**
 	 * parse type from configuration string
 	 *
 	 * @param string $fieldName
@@ -433,10 +433,9 @@ class EntityDescriptor {
 }
 
 /**
- * shorten Field Exception class
+ * Short Field Exception class
  *
  * @author Florent Hazard <contact@sowapps.com>
- *
  */
 class FE extends Exception {
 
@@ -517,6 +516,14 @@ class TypeNumber extends TypeDescriptor {
 	}
 	
 	/**
+	 * @param array $args
+	 * @see TypeDescriptor::htmlInputAttr()
+	 */
+	public function htmlInputAttr($args) {
+		return ' maxlength="' . max(static::getMaxLengthOf($args->min, $args->decimals), static::getMaxLengthOf($args->max, $args->decimals)) . '"';
+	}
+	
+	/**
 	 *
 	 * Get the max length of number
 	 *
@@ -526,14 +533,6 @@ class TypeNumber extends TypeDescriptor {
 	 */
 	public static function getMaxLengthOf($number, $decimals) {
 		return strlen((int) $number) + ($decimals ? 1 + $decimals : 0);
-	}
-	
-	/**
-	 * @param array $args
-	 * @see TypeDescriptor::htmlInputAttr()
-	 */
-	public function htmlInputAttr($args) {
-		return ' maxlength="' . max(static::getMaxLengthOf($args->min, $args->decimals), static::getMaxLengthOf($args->max, $args->decimals)) . '"';
 	}
 	
 }
@@ -703,9 +702,6 @@ class TypeDatetime extends TypeDescriptor {
 	 * @var string
 	 */
 	protected string $name = 'datetime';
-	/*
-	 * Date format is storing a date, not a specific moment, we don't care about timezone
-	 */
 	
 	/**
 	 * @param FieldDescriptor $field The field to validate
@@ -715,6 +711,9 @@ class TypeDatetime extends TypeDescriptor {
 	 * @see TypeDescriptor::validate()
 	 */
 	public function validate(FieldDescriptor $field, &$value, $input, &$ref) {
+		if( $value instanceof DateTime ) {
+			return $value;
+		}
 		if( !empty($input[$field->name . '_time']) ) {
 			$value .= ' ' . $input[$field->name . '_time'];//Allow HH:MM:SS and HH:MM
 		}

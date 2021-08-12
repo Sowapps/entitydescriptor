@@ -108,9 +108,10 @@ abstract class TypeDescriptor {
 	
 	/**
 	 * Validate value
+	 * This should handle a string and the final type, e.g. DateTime for TypeDatetime
 	 *
 	 * @param FieldDescriptor $field The field to validate
-	 * @param string $value The field value to validate
+	 * @param mixed $value The field value to validate
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
 	 */
@@ -118,10 +119,12 @@ abstract class TypeDescriptor {
 	}
 	
 	/**
-	 * Format value before being validated
+	 * Format value before being validated.
+	 * Validator should allow string and final type (string, object...)
+	 * Use this function if user/developer could try to validate a validator from another type
 	 *
 	 * @param FieldDescriptor $field The field to format
-	 * @param string $value The field value to format
+	 * @param mixed $value The field value to format
 	 * @param array $input The input to validate
 	 * @param PermanentEntity $ref The object to update, may be null
 	 */
