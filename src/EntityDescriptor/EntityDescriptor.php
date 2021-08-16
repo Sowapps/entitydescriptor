@@ -267,39 +267,6 @@ class EntityDescriptor {
 	}
 	
 	/**
-	 * Get all available entity descriptor
-	 *
-	 * @return EntityDescriptor[]
-	 */
-	public static function getAllEntityDescriptors() {
-		$entities = [];
-		foreach( static::getAllEntities() as $entity ) {
-			$entities[$entity] = EntityDescriptor::load($entity);
-		}
-		
-		return $entities;
-	}
-	
-	/**
-	 * Get all available entities
-	 *
-	 * @return string[]
-	 */
-	public static function getAllEntities() {
-		$entities = cleanscandir(pathOf(CONFDIR . ENTITY_DESCRIPTOR_CONFIG_PATH));
-		foreach( $entities as $i => &$filename ) {
-			$pi = pathinfo($filename);
-			if( $pi['extension'] !== 'yaml' ) {
-				unset($entities[$i]);
-				continue;
-			}
-			$filename = $pi['filename'];
-		}
-		
-		return $entities;
-	}
-	
-	/**
 	 * Load an entity descriptor from configuraiton file
 	 *
 	 * @param string $name
@@ -307,17 +274,14 @@ class EntityDescriptor {
 	 * @return EntityDescriptor
 	 * @throws Exception
 	 */
-	public static function load($name, $class = null) {
+	public static function load($name, $class = null): EntityDescriptor {
 		$descriptorPath = ENTITY_DESCRIPTOR_CONFIG_PATH . $name;
 		$cache = new FSCache(self::DESCRIPTORCLASS, $name, filemtime(YAML::getFilePath($descriptorPath)));
 		
 		// Comment when editing class and entity field types
 		$descriptor = null;
 		try {
-			if( !defined('ENTITY_ALWAYS_RELOAD')
-				&& $cache->get($descriptor)
-				&& isset($descriptor->version)
-				&& $descriptor->version == self::VERSION ) {
+			if( !defined('ENTITY_ALWAYS_RELOAD') && $cache->get($descriptor) && isset($descriptor->version) && $descriptor->version == self::VERSION ) {
 				return $descriptor;
 			}
 		} catch( Exception $e ) {
@@ -423,7 +387,7 @@ class EntityDescriptor {
 	 */
 	public static function getType($name, &$type = null) {
 		if( !isset(static::$types[$name]) ) {
-			throw new Exception('unknownType_' . $name);
+			throw new RuntimeException('unknownType_' . $name);
 		}
 		$type = &static::$types[$name];
 		

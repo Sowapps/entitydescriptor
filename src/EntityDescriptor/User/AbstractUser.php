@@ -6,6 +6,7 @@
 namespace Orpheus\EntityDescriptor\User;
 
 use Orpheus\Config\Config;
+use Orpheus\EntityDescriptor\EntityDescriptor;
 use Orpheus\EntityDescriptor\PermanentEntity;
 use Orpheus\Exception\NotFoundException;
 use Orpheus\Exception\UserException;
@@ -14,9 +15,9 @@ use Orpheus\Publisher\Exception\UnknownKeyException;
 /**
  * The abstract user class
  *
- * The user class represents an user known by the current website as a permanent entity.
+ * The user class represents a user known by the current website as a permanent entity.
  * This class is commonly inherited by a user class for registered users.
- * But an user can be a Facebook user or a Site user for example.
+ * But a user can be a Facebook user or a Site user for example.
  *
  * Require core plugin
  */
@@ -26,28 +27,25 @@ abstract class AbstractUser extends PermanentEntity {
 	const IS_LOGGED = 1;
 	const LOGGED_FORCED = 3;
 	
-	/** @var string */
-	protected static $userClass;
+	protected static string $userClass;
 	
 	/**
 	 * The table
-	 *
-	 * @var string
 	 */
-	protected static $table = 'user';
+	protected static string $table = 'user';
 	
 	/**
 	 * The fields of this object
 	 *
 	 * @var array
 	 */
-	protected static $fields = [];
+	protected static array $fields = [];
 	
 	/**
 	 * The validator
 	 * The default one is an array system.
 	 *
-	 * @var array
+	 * @var EntityDescriptor
 	 */
 	protected static $validator = [];
 	
@@ -57,9 +55,9 @@ abstract class AbstractUser extends PermanentEntity {
 	 *
 	 * @var string
 	 */
-	protected static $domain = null;
+	protected static string $domain;
 	
-	protected static $loggedUser;
+	protected static ?self $loggedUser = null;
 	
 	/**
 	 * Magic string conversion
@@ -73,29 +71,13 @@ abstract class AbstractUser extends PermanentEntity {
 	}
 	
 	/**
-	 * Check access permissions
-	 *
-	 * @param string $module The module to check
-	 * @return boolean True if this user has enough acess level to access to this module
-	 * @see checkPerm()
-	 * @warning Obsolete
-	 */
-	public function checkAccess($module) {
-		//$module pdoit être un nom de module.
-		if( !isset($GLOBALS['ACCESS']->$module) ) {
-			return true;
-		}
-		return $this->checkPerm((int) $GLOBALS['ACCESS']->$module);
-	}
-	
-	/**
 	 * Check permissions
 	 *
 	 * @param int|string $right The right to compare, can be the right string to look for or an integer.
-	 * @return boolean True if this user has enough acess level.
+	 * @return boolean True if this user has enough access level.
 	 *
-	 * Compare the accesslevel of this user to the incoming right.
-	 * $right could be an int (accesslevel) or a string (right)
+	 * Compare the access level of this user to the incoming right.
+	 * $right could be an int (access level) or a string (right)
 	 */
 	public function checkPerm($right) {
 		if( !ctype_digit("$right") && $right != -1 ) {
@@ -105,15 +87,6 @@ abstract class AbstractUser extends PermanentEntity {
 			$right = $GLOBALS['RIGHTS']->$right;
 		}
 		return $this->accesslevel >= $right;
-	}
-	
-	/**
-	 * Check if current logged user can edit this one
-	 *
-	 * @param array $input The input
-	 */
-	public function checkPermissions($input) {
-		return static::checkAccessLevel($input, $this);
 	}
 	
 	/**

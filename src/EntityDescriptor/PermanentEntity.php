@@ -23,50 +23,21 @@ use Orpheus\Time\DateTime;
 abstract class PermanentEntity extends PermanentObject {
 	
 	/**
-	 * The table
-	 *
-	 * @var string
-	 */
-	protected static $table = null;
-	
-	/**
-	 * Editable fields, not used in this subclass
-	 *
-	 * @var array
-	 * @deprecated
-	 */
-	protected static $editableFields = null;
-	
-	/**
 	 * Entity classes
-	 *
-	 * @var array
 	 */
-	protected static $entityClasses = [];
+	protected static array $entityClasses = [];
 	
 	/**
 	 * Validator of new field values
 	 *
 	 * @var EntityDescriptor
 	 */
-	protected static $validator = [];
+	protected static $validator = null;
 	
 	/**
 	 * Known entities
-	 *
-	 * @var array
 	 */
-	protected static $knownEntities = [];
-	
-	/**
-	 * Get unix timestamp from the create_date field
-	 *
-	 * @return int
-	 * @warning You can not use this function if there is no create_date field
-	 */
-	public function getCreateTime() {
-		return strtotime($this->create_date);
-	}
+	protected static array $knownEntities = [];
 	
 	/**
 	 * Validate field value and set it
@@ -90,15 +61,15 @@ abstract class PermanentEntity extends PermanentObject {
 	}
 	
 	/**
-	 * Helper method to get whereclause string from an entity
+	 * Helper method to get whereClause string from an entity
 	 *
 	 * @param string $prefix The prefix for fields, e.g "table." (with dot)
 	 * @return string
 	 *
-	 * Helper method to get whereclause string from an entity.
+	 * Helper method to get whereClause string from an entity.
 	 * The related entity should have entity_type and entity_id fields.
 	 */
-	public function getEntityWhereclause($prefix = '') {
+	public function getEntityWhereClause($prefix = ''): string {
 		return $prefix . 'entity_type LIKE ' . static::formatValue(static::getEntity()) . ' AND ' . $prefix . 'entity_id=' . $this->id();
 	}
 	
@@ -107,12 +78,12 @@ abstract class PermanentEntity extends PermanentObject {
 	 *
 	 * @return string
 	 */
-	public static function getEntity() {
+	public static function getEntity(): string {
 		return static::getTable();
 	}
 	
-	public function getLabel() {
-		return static::getClass() . '#' . $this->{static::$IDFIELD};
+	public function getLabel(): string {
+		return static::getClass() . '#' . $this->{static::$ID_FIELD};
 	}
 	
 	public function __toString() {
@@ -120,6 +91,7 @@ abstract class PermanentEntity extends PermanentObject {
 			return $this->getLabel();
 		} catch( Exception $e ) {
 			log_error($e->getMessage() . "<br />\n" . $e->getTraceAsString(), 'PermanentEntity::__toString()', false);
+			
 			return '';
 		}
 	}
@@ -131,6 +103,7 @@ abstract class PermanentEntity extends PermanentObject {
 	 * @param int $id
 	 */
 	public static function loadEntity($entity, $id) {
+		/** @var PermanentEntity $entity */
 		return $entity::load($id);
 	}
 	
@@ -215,7 +188,7 @@ abstract class PermanentEntity extends PermanentObject {
 	 *
 	 * @return string[]
 	 */
-	public static function listKnownEntities() {
+	public static function listKnownEntities(): array {
 		$entities = [];
 		foreach( static::$knownEntities as $class => &$state ) {
 			if( $state == null ) {
@@ -225,6 +198,7 @@ abstract class PermanentEntity extends PermanentObject {
 				$entities[] = $class;
 			}
 		}
+		
 		return $entities;
 	}
 	
@@ -236,12 +210,13 @@ abstract class PermanentEntity extends PermanentObject {
 	 * @return string The parse $value
 	 * @see PermanentObject::formatFieldSqlValue()
 	 */
-	protected static function parseFieldSqlValue($name, $value) {
+	protected static function parseFieldSqlValue($name, $value): string {
 		$field = static::$validator->getField($name);
 		if( $field ) {
 			return $field->getType()->parseSqlValue($field, $value);
 		}
-		return parent::parseFieldValue($name, $value);
+		
+		return parent::parseFieldSqlValue($name, $value);
 	}
 	
 	/**
@@ -252,22 +227,23 @@ abstract class PermanentEntity extends PermanentObject {
 	 * @return string The formatted $Value
 	 * @see PermanentObject::formatValue()
 	 */
-	protected static function formatFieldSqlValue($name, $value) {
+	protected static function formatFieldSqlValue($name, $value): string {
 		$field = static::$validator->getField($name);
 		if( $field ) {
 			return $field->getType()->formatSqlValue($field, $value);
 		}
+		
 		return parent::formatFieldSqlValue($name, $value);
 	}
 	
-	protected static function now($time = null) {
+	protected static function now($time = null): DateTime {
 		return new DateTime(sqlDatetime($time));
 	}
 	
 	public static function onEdit(array &$data, $object) {
 		// Format all fields into SQL values
 		foreach( $data as $key => &$value ) {
-			$value = self::formatFieldSqlValue($key, $value);
+			$value = static::formatValue($key, $value);
 		}
 	}
 }

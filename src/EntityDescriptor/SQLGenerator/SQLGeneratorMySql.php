@@ -1,10 +1,11 @@
 <?php
 /**
- * SQLGeneratorMySQL
+ * SQLGeneratorMySql
  */
 
 namespace Orpheus\EntityDescriptor\SQLGenerator;
 
+use Exception;
 use Orpheus\EntityDescriptor\EntityDescriptor;
 use Orpheus\EntityDescriptor\TypeDate;
 use Orpheus\EntityDescriptor\TypeDatetime;
@@ -13,27 +14,25 @@ use Orpheus\EntityDescriptor\TypePassword;
 use Orpheus\EntityDescriptor\TypeString;
 use Orpheus\Exception\UserException;
 use Orpheus\SQLAdapter\Exception\SQLException;
+use Orpheus\SQLAdapter\SqlAdapter;
 use Orpheus\SQLAdapter\SQLAdapterMySQL;
 
 /**
- * The SQLGeneratorMySQL class
+ * The SQLGeneratorMySql class
  *
  * Use this class to generate entity's table SQL queries and check changes in structure
  *
  * @author Florent Hazard <contact@sowapps.com>
  *
  */
-class SQLGeneratorMySQL implements SQLGenerator {
+class SQLGeneratorMySql implements SQLGenerator {
 	
 	/**
-	 *
-	 * {@inheritDoc}
-	 * @param string $field
-	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::getColumnInfosFromField()
+	 * @param object $field
+	 * @return array
 	 */
 	public function getColumnInfosFromField($field): array {
 		$TYPE = EntityDescriptor::getType($field->type);
-		$cType = '';
 		if( $TYPE instanceof TypeString ) {
 			$max = $TYPE instanceof TypePassword ? 128 : $field->args->max;
 			if( $max < 256 ) {
@@ -47,7 +46,7 @@ class SQLGeneratorMySQL implements SQLGenerator {
 			}
 		} elseif( $TYPE instanceof TypeNumber ) {
 			if( !isset($field->args->max) ) {
-				debug('Issue with ' . $field->name . ', missing max argument', $field->args);
+				text(sprintf('Issue with %s, missing max argument', $field->name), $field->args);
 			}
 			$dc = strlen((int) $field->args->max);
 			$unsigned = $field->args->min >= 0 ? 1 : 0;
@@ -57,15 +56,15 @@ class SQLGeneratorMySQL implements SQLGenerator {
 				// 				debug('$field - '.$field->name.', type='.$field->type.' => '.$max);
 				$f = 1 + 1 * $unsigned;
 				if( $max < 128 * $f ) {
-					$cType = "TINYINT";
+					$cType = 'TINYINT';
 				} elseif( $max < 32768 * $f ) {
-					$cType = "SMALLINT";
+					$cType = 'SMALLINT';
 				} elseif( $max < 8388608 * $f ) {
-					$cType = "MEDIUMINT";
+					$cType = 'MEDIUMINT';
 				} elseif( $max < 2147483648 * $f ) {
-					$cType = "INT";
+					$cType = 'INT';
 				} else {
-					$cType = "BIGINT";
+					$cType = 'BIGINT';
 				}
 				$cType .= '(' . strlen($max) . ')';
 				
@@ -74,11 +73,11 @@ class SQLGeneratorMySQL implements SQLGenerator {
 				// http://code.rohitink.com/2013/06/12/mysql-integer-float-decimal-data-types-differences/
 				if( $dc < 23 && $field->args->decimals < 8 ) {// Approx accurate to 7 decimals
 					// 				if( $dc < 7 ) {// Approx accurate to 7 decimals
-					$cType = "FLOAT";
+					$cType = 'FLOAT';
 				} else {// Approx accurate to 15 decimals
-					$cType = "DOUBLE";
+					$cType = 'DOUBLE';
 				}
-				$cType .= "({$dc},{$field->args->decimals})";
+				$cType .= sprintf('(%s,%s)', $dc, $field->args->decimals);
 			}
 			if( $unsigned ) {
 				$cType .= ' UNSIGNED';
@@ -88,7 +87,7 @@ class SQLGeneratorMySQL implements SQLGenerator {
 		} elseif( $TYPE instanceof TypeDatetime ) {
 			$cType = 'DATETIME';
 		} else {
-			throw new UserException('Type of ' . $field->name . ' (' . $TYPE->getName() . ') not found');
+			throw new UserException(sprintf('Type of %s (%s) not found', $field->name, $TYPE->getName()));
 		}
 		$r = ['name' => $field->name, 'type' => $cType, 'nullable' => !!$field->nullable];
 		$r['autoIncrement'] = $r['primaryKey'] = ($field->name == 'id');
@@ -97,47 +96,43 @@ class SQLGeneratorMySQL implements SQLGenerator {
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
-	 * @param string $field
+	 * @param array $fieldColumn
+	 * @param SQLAdapterMySQL $sqlAdapter
 	 * @param boolean $withPK
-	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::getColumnDefinition()
+	 * @return string
 	 */
-	public function getColumnDefinition($field, $withPK = true): string {
-		// 	text('mysqlColumnDefinition()');
-		// 	text($field);
-		$field = (object) $field;
+	public function getColumnDefinition(array $fieldColumn, SQLAdapter $sqlAdapter, $withPK = true): string {
+		$fieldColumn = (object) $fieldColumn;
 		
-		return $this->formatHTML_Identifier($field->name) . ' ' . $this->formatHTML_ColumnType($field->type) .
-			' ' . $this->formatHTML_ReservedWord($field->nullable ? 'NULL' : 'NOT NULL') .
-			(!empty($field->autoIncrement) ? ' ' . $this->formatHTML_ReservedWord('AUTO_INCREMENT') : '') . (($withPK && !empty($field->primaryKey)) ? ' ' . $this->formatHTML_ReservedWord('PRIMARY KEY') : '');
+		return $this->formatHTML_Identifier($fieldColumn->name, $sqlAdapter) . ' ' . $this->formatHTML_ColumnType($fieldColumn->type) .
+			' ' . $this->formatHTML_ReservedWord($fieldColumn->nullable ? 'NULL' : 'NOT NULL') .
+			(!empty($fieldColumn->autoIncrement) ? ' ' . $this->formatHTML_ReservedWord('AUTO_INCREMENT') : '') . (($withPK && !empty($fieldColumn->primaryKey)) ? ' ' . $this->formatHTML_ReservedWord('PRIMARY KEY') : '');
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
-	 * @param string $index
-	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::getIndexDefinition()
+	 * @param object $index
+	 * @param SQLAdapterMySQL $sqlAdapter
+	 * @return string
 	 */
-	public function getIndexDefinition($index): string {
+	public function getIndexDefinition($index, SqlAdapter $sqlAdapter): string {
 		$fields = '';
 		foreach( $index->fields as $field ) {
-			$fields .= ($fields ? ', ' : '') . $this->formatHTML_Identifier($field);
+			$fields .= ($fields ? ', ' : '') . $this->formatHTML_Identifier($field, $sqlAdapter);
 		}
 		
-		return $this->formatHTML_ReservedWord($index->type) . (!empty($index->name) ? ' ' . $this->formatHTML_Identifier($index->name) : '') . ' (' . $fields . ')';
+		return $this->formatHTML_ReservedWord($index->type) . (!empty($index->name) ? ' ' . $this->formatHTML_Identifier($index->name, $sqlAdapter) : '') . ' (' . $fields . ')';
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param EntityDescriptor $ed
-	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::matchEntity()
+	 * @param SQLAdapterMySQL $sqlAdapter
+	 * @return string|null
+	 * @throws Exception
 	 */
-	public function matchEntity(EntityDescriptor $ed): ?string {
+	public function matchEntity(EntityDescriptor $ed, SqlAdapter $sqlAdapter): ?string {
 		try {
 			// Try to update, if SHOW fails, we try to create the table
-			$columns = pdo_query('SHOW COLUMNS FROM ' . SQLAdapterMySQL::doEscapeIdentifier($ed->getName()), PDOFETCHALL);//|PDOERROR_MINOR
+			$columns = $sqlAdapter->query(sprintf('SHOW COLUMNS FROM %s', $sqlAdapter->escapeIdentifier($ed->getName())), PDOFETCHALL);
 			// Fields
 			$fields = $ed->getFields();
 			$alter = '';
@@ -146,27 +141,25 @@ class SQLGeneratorMySQL implements SQLGenerator {
 				$cf = ['name'       => $cc->Field, 'type' => strtoupper($cc->Type), 'nullable' => $cc->Null == 'YES',
 					   'primaryKey' => $cc->Key == 'PRI', 'autoIncrement' => strpos($cc->Extra, 'auto_increment') !== false];
 				if( isset($fields[$cf['name']]) ) {
-					$f = $this->getColumnInfosFromField($fields[$cf['name']]);
+					$fieldColumn = $this->getColumnInfosFromField($fields[$cf['name']]);
 					unset($fields[$cf['name']]);
 					// Current definition is different from former
-					if( $f != $cf ) {
-						// 						$alter .= (!empty($alter) ? ", \n" : '')."\t CHANGE COLUMN ".SQLAdapter::doEscapeIdentifier($cf['name']).' '.$this->getColumnDefinition($f, !$cf['primaryKey']);
-						$alter .= (!empty($alter) ? ", \n" : '') . $this->formatHTML_SubCommand('CHANGE COLUMN') . ' ' . $this->formatHTML_Identifier($cf['name']) . ' ' . $this->getColumnDefinition($f, !$cf['primaryKey']);
+					if( $fieldColumn !== $cf ) {
+						$alter .= (!empty($alter) ? ", \n" : '') . $this->formatHTML_SubCommand('CHANGE COLUMN') . ' ' . $this->formatHTML_Identifier($cf['name'], $sqlAdapter) .
+							' ' . $this->getColumnDefinition($fieldColumn, $sqlAdapter, !$cf['primaryKey']);
 					}
 				} else {
 					// Remove column
-					// 					$alter .= (!empty($alter) ? ", \n" : '')."\t DROP COLUMN ".SQLAdapter::doEscapeIdentifier($cf['name']);
-					$alter .= (!empty($alter) ? ", \n" : '') . $this->formatHTML_SubCommand('DROP COLUMN') . ' ' . $this->formatHTML_Identifier($cf['name']);
+					$alter .= (!empty($alter) ? ", \n" : '') . $this->formatHTML_SubCommand('DROP COLUMN') . ' ' . $this->formatHTML_Identifier($cf['name'], $sqlAdapter);
 				}
 			}
-			foreach( $fields as $f ) {
-				// 				$alter .= (!empty($alter) ? ", \n" : '')."\t ADD COLUMN ".$this->getColumnDefinition($this->getColumnInfosFromField($f));
-				$alter .= (!empty($alter) ? ", \n" : '') . $this->formatHTML_SubCommand('ADD COLUMN') . ' ' . $this->getColumnDefinition($this->getColumnInfosFromField($f));
+			foreach( $fields as $fieldColumn ) {
+				$alter .= (!empty($alter) ? ", \n" : '') . $this->formatHTML_SubCommand('ADD COLUMN') . ' ' . $this->getColumnDefinition($this->getColumnInfosFromField($fieldColumn), $sqlAdapter);
 			}
-			unset($fields, $f, $cc, $cf, $columns);
+			unset($fields, $fieldColumn, $cc, $cf, $columns);
 			// Indexes
 			try {
-				$rawIndexes = pdo_query('SHOW INDEX FROM ' . SQLAdapterMySQL::doEscapeIdentifier($ed->getName()), PDOFETCHALL);//|PDOERROR_MINOR
+				$rawIndexes = $sqlAdapter->query(sprintf('SHOW INDEX FROM %s', $sqlAdapter->escapeIdentifier($ed->getName())), PDOFETCHALL);
 				$indexes = $ed->getIndexes();
 				// Current indexes
 				$cIndexes = [];
@@ -198,13 +191,11 @@ class SQLGeneratorMySQL implements SQLGenerator {
 					}
 					if( !$found ) {
 						// Remove index
-						$alter .= (!empty($alter) ? ", \n" : '') . $this->formatHTML_SubCommand('DROP INDEX') . ' ' . $this->formatHTML_Identifier($ci->name);
-						// 						$alter .= (!empty($alter) ? ", \n" : '')."\t DROP INDEX ".SQLAdapter::doEscapeIdentifier($ci->name);
+						$alter .= (!empty($alter) ? ", \n" : '') . $this->formatHTML_SubCommand('DROP INDEX') . ' ' . $this->formatHTML_Identifier($ci->name, $sqlAdapter);
 					}
 				}
 				foreach( $indexes as $index ) {
-					$alter .= (!empty($alter) ? ", \n" : '') . $this->formatHTML_SubCommand('ADD') . ' ' . $this->getIndexDefinition($index);
-					// 					$alter .= (!empty($alter) ? ", \n" : '')."\t ADD ".$this->getIndexDefinition($index);
+					$alter .= (!empty($alter) ? ", \n" : '') . $this->formatHTML_SubCommand('ADD') . ' ' . $this->getIndexDefinition($index, $sqlAdapter);
 				}
 			} catch( SQLException $e ) {
 				return null;
@@ -213,34 +204,33 @@ class SQLGeneratorMySQL implements SQLGenerator {
 				return null;
 			}
 			
-			return '<div class="table-operation table-alter">' . $this->formatHTML_Command('ALTER TABLE') . ' ' . $this->formatHTML_Identifier($ed->getName()) . "\n{$alter};</div>";
+			return sprintf('<div class="table-operation table-alter">%s %s\n%s;</div>',
+				$this->formatHTML_Command('ALTER TABLE'), $this->formatHTML_Identifier($ed->getName(), $sqlAdapter), $alter);
 		} catch( SQLException $e ) {
-			return $this->getCreate($ed);
+			return $this->getCreate($ed, $sqlAdapter);
 		}
 	}
 	
 	/**
-	 *
-	 * {@inheritDoc}
 	 * @param EntityDescriptor $ed
-	 * @see \Orpheus\EntityDescriptor\SQLGenerator\SQLGenerator::getCreate()
 	 */
-	public function getCreate(EntityDescriptor $ed): string {
+	public function getCreate(EntityDescriptor $ed, SqlAdapter $sqlAdapter): string {
 		$createDefinition = '';
 		foreach( $ed->getFields() as $field ) {
-			$createDefinition .= (!empty($createDefinition) ? ", \n" : '') . "\t" . $this->getColumnDefinition($this->getColumnInfosFromField($field));
+			$createDefinition .= (!empty($createDefinition) ? ", \n" : '') . "\t" . $this->getColumnDefinition($this->getColumnInfosFromField($field), $sqlAdapter);
 		}
 		foreach( $ed->getIndexes() as $index ) {
-			$createDefinition .= ", \n\t" . $this->getIndexDefinition($index);
+			$createDefinition .= ", \n\t" . $this->getIndexDefinition($index, $sqlAdapter);
 		}
 		if( !$createDefinition ) {
 			throw new UserException('No columns');
 		}
 		
-		return '
-<div class="table-operation table-create">' . $this->formatHTML_Command('CREATE TABLE IF NOT EXISTS') . ' ' . $this->formatHTML_Identifier($ed->getName()) . ' (
-' . $createDefinition . '
-) ' . $this->formatHTML_ReservedWord('ENGINE=MYISAM') . ' ' . $this->formatHTML_ReservedWord('CHARACTER SET') . ' ' . $this->formatHTML_Identifier('utf8') . ';</div>';
+		return sprintf('
+<div class="table-operation table-create">%s %s (
+%s
+) %s %s %s;</div>', $this->formatHTML_Command(/** @lang text */ 'CREATE TABLE IF NOT EXISTS'), $this->formatHTML_Identifier($ed->getName(), $sqlAdapter), $createDefinition,
+			$this->formatHTML_ReservedWord('ENGINE=MYISAM'), $this->formatHTML_ReservedWord('CHARACTER SET'), $this->formatHTML_Identifier('utf8', $sqlAdapter));
 	}
 	
 	/**
@@ -287,11 +277,12 @@ class SQLGeneratorMySQL implements SQLGenerator {
 	/**
 	 * Format identifier into HTML
 	 *
-	 * @param string $string
+	 * @param string $identifier
+	 * @param SQLAdapterMySQL $sqlAdapter
 	 * @return string
 	 */
-	protected function formatHTML_Identifier($string): string {
-		return $this->formatHTML_InlineBlock(SQLAdapterMySQL::doEscapeIdentifier($string), 'query_identifier');
+	protected function formatHTML_Identifier($identifier, SqlAdapter $sqlAdapter): string {
+		return $this->formatHTML_InlineBlock($sqlAdapter->escapeIdentifier($identifier), 'query_identifier');
 	}
 	
 	/**

@@ -4,10 +4,12 @@ namespace Orpheus\EntityDescriptor\Controller;
 
 use Exception;
 use Orpheus\EntityDescriptor\EntityDescriptor;
-use Orpheus\EntityDescriptor\SQLGenerator\SQLGeneratorMySQL;
+use Orpheus\EntityDescriptor\PermanentEntity;
+use Orpheus\EntityDescriptor\SQLGenerator\SQLGeneratorMySql;
 use Orpheus\InputController\CLIController\CLIController;
 use Orpheus\InputController\CLIController\CLIRequest;
 use Orpheus\InputController\CLIController\CLIResponse;
+use Orpheus\SQLAdapter\SqlAdapter;
 
 /**
  * Class UpgradeDatabaseCliController
@@ -23,11 +25,13 @@ class UpgradeDatabaseCliController extends CLIController {
 	 */
 	public function run($request): CLIResponse {
 		
-		$generator = new SQLGeneratorMySQL();
+		$generator = new SQLGeneratorMySql();
 		
 		$query = '';
-		foreach( EntityDescriptor::getAllEntities() as $entity ) {
-			$entityQuery = strip_tags($generator->matchEntity(EntityDescriptor::load($entity)));
+		/** @var PermanentEntity $entityClass */
+		foreach( PermanentEntity::listKnownEntities() as $entityClass ) {
+			$entityDescriptor = EntityDescriptor::load($entityClass::getTable(), $entityClass);
+			$entityQuery = strip_tags($generator->matchEntity($entityDescriptor, $entityClass::getSqlAdapter()));
 			if( $entityQuery ) {
 				$query .= ($query ? "\n\n" : '') . $entityQuery;
 			}
@@ -37,8 +41,8 @@ class UpgradeDatabaseCliController extends CLIController {
 			return new CLIResponse(0, 'No changes');
 		}
 		
-		$this->printLine("Available changes:
-{$query}\n");
+		$this->printLine(sprintf('Available changes:
+%s\n', $query));
 		
 		$answer = $this->requestInputLine('Do you want to apply changes ? [Y/n] ', false);
 		
@@ -47,7 +51,8 @@ class UpgradeDatabaseCliController extends CLIController {
 		}
 		echo 'Applying changes... ';
 		
-		pdo_query($query, PDOEXEC);
+		$defaultAdapter = SqlAdapter::getInstance();
+		$defaultAdapter->query($query, PDOEXEC);
 		
 		$this->printLine('Done!');
 		
