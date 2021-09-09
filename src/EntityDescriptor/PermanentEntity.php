@@ -117,9 +117,7 @@ abstract class PermanentEntity extends PermanentObject {
 		if( static::$validator ) {
 			throw new Exception('Class ' . static::getClass() . ' with table ' . static::$table . ' is already initialized.');
 		}
-		if( static::$domain === null ) {
-			static::$domain = static::$table;
-		}
+		static::$domain ??= static::$table;
 		if( $isFinal ) {
 			$ed = EntityDescriptor::load(static::$table, static::getClass());
 			static::$fields = $ed->getFieldsName();
@@ -206,11 +204,11 @@ abstract class PermanentEntity extends PermanentObject {
 	 * Parse the value from SQL scalar to PHP type
 	 *
 	 * @param string $name The field name to parse
-	 * @param string $value The field value to parse
-	 * @return string The parse $value
+	 * @param mixed $value The field value to parse
+	 * @return mixed The parsed value
 	 * @see PermanentObject::formatFieldSqlValue()
 	 */
-	protected static function parseFieldSqlValue($name, $value): string {
+	protected static function parseFieldSqlValue(string $name, $value) {
 		$field = static::$validator->getField($name);
 		if( $field ) {
 			return $field->getType()->parseSqlValue($field, $value);
@@ -242,8 +240,8 @@ abstract class PermanentEntity extends PermanentObject {
 	
 	public static function onEdit(array &$data, $object) {
 		// Format all fields into SQL values
-		foreach( $data as $key => &$value ) {
-			$value = static::formatValue($key, $value);
+		foreach( $data as $field => &$value ) {
+			$value = static::formatFieldSqlValue($field, $value);
 		}
 	}
 }

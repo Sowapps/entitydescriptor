@@ -138,7 +138,7 @@ abstract class TypeDescriptor {
 	 * @param string $value The field value to parse
 	 * @return mixed
 	 */
-	public function parseUserValue(FieldDescriptor $field, $value) {
+	public function parseUserValue(FieldDescriptor $field, string $value) {
 		return $value;
 	}
 	
@@ -149,7 +149,7 @@ abstract class TypeDescriptor {
 	 * @param mixed $value The field value to parse
 	 * @return string
 	 */
-	public function formatUserValue(FieldDescriptor $field, $value) {
+	public function formatUserValue(FieldDescriptor $field, $value): string {
 		return "$value";
 	}
 	
