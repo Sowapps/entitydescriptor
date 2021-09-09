@@ -170,7 +170,7 @@ abstract class TypeDescriptor {
 	 *
 	 * @param FieldDescriptor $field The field to parse
 	 * @param string $value The field value to parse
-	 * @return string
+	 * @return mixed
 	 */
 	public function formatSqlValue(FieldDescriptor $field, $value) {
 		return $value;
