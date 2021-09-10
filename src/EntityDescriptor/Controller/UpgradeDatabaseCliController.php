@@ -41,8 +41,8 @@ class UpgradeDatabaseCliController extends CLIController {
 			return new CLIResponse(0, 'No changes');
 		}
 		
-		$this->printLine(sprintf('Available changes:
-%s\n', $query));
+		$this->printLine(sprintf("Available changes:
+%s\n", $query));
 		
 		$answer = $this->requestInputLine('Do you want to apply changes ? [Y/n] ', false);
 		

@@ -204,8 +204,8 @@ class SQLGeneratorMySql implements SQLGenerator {
 				return null;
 			}
 			
-			return sprintf('<div class="table-operation table-alter">%s %s\n%s;</div>',
-				$this->formatHTML_Command('ALTER TABLE'), $this->formatHTML_Identifier($ed->getName(), $sqlAdapter), $alter);
+			return sprintf('<div class="table-operation table-alter">%s %s%s%s;</div>',
+				$this->formatHTML_Command('ALTER TABLE'), $this->formatHTML_Identifier($ed->getName(), $sqlAdapter), "\n", $alter);
 		} catch( SQLException $e ) {
 			return $this->getCreate($ed, $sqlAdapter);
 		}
