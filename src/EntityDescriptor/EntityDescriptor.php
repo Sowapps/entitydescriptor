@@ -884,6 +884,10 @@ class TypeBoolean extends TypeInteger {
 		parent::validate($field, $value, $input, $ref);
 	}
 	
+	public function parseSqlValue(FieldDescriptor $field, $value) {
+		return boolval($value);
+	}
+	
 }
 
 EntityDescriptor::registerType(new TypeBoolean());
