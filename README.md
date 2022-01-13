@@ -1,2 +1,2 @@
 # entitydescriptor
-Entity DEscriptor Library for Orpheus, use ORM now !
+Entity Descriptor Library for Orpheus, use ORM now !
