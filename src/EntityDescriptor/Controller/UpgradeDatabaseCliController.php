@@ -6,9 +6,9 @@ use Exception;
 use Orpheus\EntityDescriptor\EntityDescriptor;
 use Orpheus\EntityDescriptor\PermanentEntity;
 use Orpheus\EntityDescriptor\SQLGenerator\SQLGeneratorMySql;
-use Orpheus\InputController\CLIController\CLIController;
-use Orpheus\InputController\CLIController\CLIRequest;
-use Orpheus\InputController\CLIController\CLIResponse;
+use Orpheus\InputController\CliController\CliController;
+use Orpheus\InputController\CliController\CLIRequest;
+use Orpheus\InputController\CliController\CLIResponse;
 use Orpheus\SQLAdapter\SqlAdapter;
 
 /**
@@ -16,7 +16,7 @@ use Orpheus\SQLAdapter\SqlAdapter;
  * Controller to upgrade database using cli
  *
  */
-class UpgradeDatabaseCliController extends CLIController {
+class UpgradeDatabaseCliController extends CliController {
 	
 	/**
 	 * @param CLIRequest $request The input CLI request
