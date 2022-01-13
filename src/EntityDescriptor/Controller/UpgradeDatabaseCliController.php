@@ -5,11 +5,11 @@ namespace Orpheus\EntityDescriptor\Controller;
 use Exception;
 use Orpheus\EntityDescriptor\EntityDescriptor;
 use Orpheus\EntityDescriptor\PermanentEntity;
-use Orpheus\EntityDescriptor\SQLGenerator\SQLGeneratorMySql;
+use Orpheus\EntityDescriptor\SqlGenerator\SqlGeneratorMySql;
 use Orpheus\InputController\CliController\CliController;
 use Orpheus\InputController\CliController\CLIRequest;
 use Orpheus\InputController\CliController\CLIResponse;
-use Orpheus\SQLAdapter\SqlAdapter;
+use Orpheus\SqlAdapter\SqlAdapter;
 
 /**
  * Class UpgradeDatabaseCliController
@@ -25,7 +25,7 @@ class UpgradeDatabaseCliController extends CliController {
 	 */
 	public function run($request): CLIResponse {
 		
-		$generator = new SQLGeneratorMySql();
+		$generator = new SqlGeneratorMySql();
 		
 		$query = '';
 		/** @var PermanentEntity $entityClass */

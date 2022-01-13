@@ -1,21 +1,21 @@
 <?php
 /**
- * SQLGenerator
+ * SqlGenerator
  */
 
-namespace Orpheus\EntityDescriptor\SQLGenerator;
+namespace Orpheus\EntityDescriptor\SqlGenerator;
 
 use Orpheus\EntityDescriptor\EntityDescriptor;
 use Orpheus\EntityDescriptor\FieldDescriptor;
-use Orpheus\SQLAdapter\SqlAdapter;
+use Orpheus\SqlAdapter\SqlAdapter;
 
 /**
- * The SQLGenerator interface
+ * The SqlGenerator interface
  *
  * @author Florent Hazard <contact@sowapps.com>
  *
  */
-interface SQLGenerator {
+interface SqlGenerator {
 	
 	/**
 	 * Get column information from $field

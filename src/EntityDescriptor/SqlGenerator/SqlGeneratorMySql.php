@@ -1,9 +1,9 @@
 <?php
 /**
- * SQLGeneratorMySql
+ * SqlGeneratorMySql
  */
 
-namespace Orpheus\EntityDescriptor\SQLGenerator;
+namespace Orpheus\EntityDescriptor\SqlGenerator;
 
 use Exception;
 use Orpheus\EntityDescriptor\EntityDescriptor;
@@ -13,19 +13,19 @@ use Orpheus\EntityDescriptor\TypeNumber;
 use Orpheus\EntityDescriptor\TypePassword;
 use Orpheus\EntityDescriptor\TypeString;
 use Orpheus\Exception\UserException;
-use Orpheus\SQLAdapter\Exception\SQLException;
-use Orpheus\SQLAdapter\SqlAdapter;
-use Orpheus\SQLAdapter\SQLAdapterMySQL;
+use Orpheus\SqlAdapter\Exception\SqlException;
+use Orpheus\SqlAdapter\SqlAdapter;
+use Orpheus\SqlAdapter\SqlAdapterMySQL;
 
 /**
- * The SQLGeneratorMySql class
+ * The SqlGeneratorMySql class
  *
  * Use this class to generate entity's table SQL queries and check changes in structure
  *
  * @author Florent Hazard <contact@sowapps.com>
  *
  */
-class SQLGeneratorMySql implements SQLGenerator {
+class SqlGeneratorMySql implements SqlGenerator {
 	
 	/**
 	 * @param object $field
@@ -97,11 +97,11 @@ class SQLGeneratorMySql implements SQLGenerator {
 	
 	/**
 	 * @param array $fieldColumn
-	 * @param SQLAdapterMySQL $sqlAdapter
+	 * @param SqlAdapterMySQL $sqlAdapter
 	 * @param boolean $withPK
 	 * @return string
 	 */
-	public function getColumnDefinition(array $fieldColumn, SQLAdapter $sqlAdapter, $withPK = true): string {
+	public function getColumnDefinition(array $fieldColumn, SqlAdapter $sqlAdapter, $withPK = true): string {
 		$fieldColumn = (object) $fieldColumn;
 		
 		return $this->formatHTML_Identifier($fieldColumn->name, $sqlAdapter) . ' ' . $this->formatHTML_ColumnType($fieldColumn->type) .
@@ -111,7 +111,7 @@ class SQLGeneratorMySql implements SQLGenerator {
 	
 	/**
 	 * @param object $index
-	 * @param SQLAdapterMySQL $sqlAdapter
+	 * @param SqlAdapterMySQL $sqlAdapter
 	 * @return string
 	 */
 	public function getIndexDefinition($index, SqlAdapter $sqlAdapter): string {
@@ -125,7 +125,7 @@ class SQLGeneratorMySql implements SQLGenerator {
 	
 	/**
 	 * @param EntityDescriptor $ed
-	 * @param SQLAdapterMySQL $sqlAdapter
+	 * @param SqlAdapterMySQL $sqlAdapter
 	 * @return string|null
 	 * @throws Exception
 	 */
@@ -197,7 +197,7 @@ class SQLGeneratorMySql implements SQLGenerator {
 				foreach( $indexes as $index ) {
 					$alter .= (!empty($alter) ? ", \n" : '') . $this->formatHTML_SubCommand('ADD') . ' ' . $this->getIndexDefinition($index, $sqlAdapter);
 				}
-			} catch( SQLException $e ) {
+			} catch( SqlException $e ) {
 				return null;
 			}
 			if( empty($alter) ) {
@@ -206,7 +206,7 @@ class SQLGeneratorMySql implements SQLGenerator {
 			
 			return sprintf('<div class="table-operation table-alter">%s %s%s%s;</div>',
 				$this->formatHTML_Command('ALTER TABLE'), $this->formatHTML_Identifier($ed->getName(), $sqlAdapter), "\n", $alter);
-		} catch( SQLException $e ) {
+		} catch( SqlException $e ) {
 			return $this->getCreate($ed, $sqlAdapter);
 		}
 	}
@@ -278,7 +278,7 @@ class SQLGeneratorMySql implements SQLGenerator {
 	 * Format identifier into HTML
 	 *
 	 * @param string $identifier
-	 * @param SQLAdapterMySQL $sqlAdapter
+	 * @param SqlAdapterMySQL $sqlAdapter
 	 * @return string
 	 */
 	protected function formatHTML_Identifier($identifier, SqlAdapter $sqlAdapter): string {

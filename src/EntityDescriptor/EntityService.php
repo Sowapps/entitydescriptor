@@ -5,7 +5,7 @@ namespace Orpheus\EntityDescriptor;
 use Exception;
 use Orpheus\Exception\NotFoundException;
 use Orpheus\Exception\UserException;
-use Orpheus\SQLRequest\SQLSelectRequest;
+use Orpheus\SqlRequest\SqlSelectRequest;
 use RuntimeException;
 
 class EntityService {
@@ -95,13 +95,13 @@ class EntityService {
 	
 	/**
 	 * @param array|null $filter
-	 * @return SQLSelectRequest
+	 * @return SqlSelectRequest
 	 * @throws Exception
 	 */
 	public function getSelectQuery($filter = null) {
 		/** @var PermanentEntity $entityClass */
 		$entityClass = $this->getEntityClass();
-		/** @var SQLSelectRequest $query */
+		/** @var SqlSelectRequest $query */
 		$query = $entityClass::get();
 		if( !empty($filter['max']) ) {
 			$query->number($filter['max']);
