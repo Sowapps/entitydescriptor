@@ -8,7 +8,7 @@ use Orpheus\InputController\HttpController\HttpRoute;
 use Orpheus\Time\DateTime;
 
 
-if( !defined('ORPHEUSPATH') ) {
+if( !defined('ORPHEUS_PATH') ) {
 	// Do not load in a non-orpheus environment
 	return;
 }

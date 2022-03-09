@@ -2,7 +2,6 @@
 
 namespace Orpheus\EntityDescriptor;
 
-use Exception;
 use Orpheus\Exception\NotFoundException;
 use Orpheus\Exception\UserException;
 use Orpheus\SqlRequest\SqlSelectRequest;
@@ -13,24 +12,24 @@ class EntityService {
 	/**
 	 * @var string The entity class, if not used, override the calling methods
 	 */
-	protected $entityClass;
+	protected string $entityClass;
 	
 	/**
 	 * @var array The fields
 	 */
-	protected $fields = [];
+	protected array $fields = [];
 	
 	/**
 	 * @var array The columns
 	 */
-	protected $columns = [];
+	protected array $columns = [];
 	
 	/**
 	 * EntityService constructor.
 	 *
 	 * @param string $entityClass
 	 */
-	public function __construct($entityClass) {
+	public function __construct(string $entityClass) {
 		$this->entityClass = $entityClass;
 	}
 	
@@ -96,9 +95,8 @@ class EntityService {
 	/**
 	 * @param array|null $filter
 	 * @return SqlSelectRequest
-	 * @throws Exception
 	 */
-	public function getSelectQuery($filter = null) {
+	public function getSelectQuery($filter = null): SqlSelectRequest {
 		/** @var PermanentEntity $entityClass */
 		$entityClass = $this->getEntityClass();
 		/** @var SqlSelectRequest $query */
@@ -123,11 +121,11 @@ class EntityService {
 		return $query;
 	}
 	
-	public function updateItem(PermanentEntity $item, $input, $fields = null) {
+	public function updateItem(PermanentEntity $item, $input, $fields = null): int {
 		return $item->update($input, $fields !== null ? $fields : $this->getEditableFields($input, $item));
 	}
 	
-	public function deleteItem(PermanentEntity $item) {
+	public function deleteItem(PermanentEntity $item): int {
 		return $item->remove();
 	}
 	
@@ -142,7 +140,7 @@ class EntityService {
 	/**
 	 * @return array
 	 */
-	public function getColumns() {
+	public function getColumns(): array {
 		return $this->columns;
 	}
 	
@@ -151,16 +149,16 @@ class EntityService {
 	}
 	
 	/**
-	 * @return FieldList
+	 * @return array
 	 */
-	public function getFields() {
+	public function getFields(): array {
 		return $this->fields;
 	}
 	
 	/**
-	 * @param FieldList $fields
+	 * @param array $fields
 	 */
-	public function setFields($fields) {
+	public function setFields(array $fields) {
 		$this->fields = $fields;
 	}
 	
