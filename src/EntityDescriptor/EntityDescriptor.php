@@ -275,8 +275,8 @@ class EntityDescriptor {
 	 * @throws Exception
 	 */
 	public static function load($name, $class = null): EntityDescriptor {
-		$descriptorPath = ENTITY_DESCRIPTOR_CONFIG_PATH . $name;
-		$cache = new FSCache(self::DESCRIPTORCLASS, $name, filemtime(YAML::getFilePath($descriptorPath)));
+		$descriptorSource = ENTITY_DESCRIPTOR_CONFIG_PATH . $name;
+		$cache = new FSCache(self::DESCRIPTORCLASS, $name, filemtime(YAML::getFilePath($descriptorSource)));
 		
 		// Comment when editing class and entity field types
 		$descriptor = null;
@@ -290,7 +290,7 @@ class EntityDescriptor {
 		}
 		// Unable to get from cache, building new one
 		
-		$conf = YAML::build($descriptorPath, true);
+		$conf = YAML::build($descriptorSource, true);
 		if( empty($conf->fields) ) {
 			throw new Exception('Descriptor file for "' . $name . '" is corrupted, empty or not found, there is no field.');
 		}
@@ -512,6 +512,7 @@ EntityDescriptor::registerType(new TypeNumber());
 class TypeString extends TypeDescriptor {
 	
 	protected static $defaultMinLength = 0;
+	
 	protected static $defaultMaxLength = 65535;
 	
 	/**
@@ -1018,6 +1019,7 @@ class TypeRef extends TypeNatural {
 	 * @var string
 	 */
 	protected string $name = 'ref';
+	
 	// 	protected $nullable	= false;
 	// MySQL needs more logic to select a null field with an index
 	// Prefer to set default to 0 instead of using nullable
@@ -1101,6 +1103,7 @@ EntityDescriptor::registerType(new TypeEmail());
 class TypePassword extends TypeString {
 	
 	protected static $defaultMinLength = 5;
+	
 	protected static $defaultMaxLength = 128;
 	
 	/**
