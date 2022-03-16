@@ -175,7 +175,7 @@ abstract class AbstractUser extends PermanentEntity {
 	/**
 	 * @return string
 	 */
-	public static function getUserClass() {
+	public static function getUserClass(): string {
 		return self::$userClass;
 	}
 	
@@ -191,7 +191,7 @@ abstract class AbstractUser extends PermanentEntity {
 	 *
 	 * @return static The user of the current client logged in
 	 */
-	public static function getLoggedUser() {
+	public static function getLoggedUser(): ?AbstractUser {
 		global $USER;// BC - Auto load
 		/** @var static $user */
 		if( !static::isLogged() ) {
@@ -219,7 +219,7 @@ abstract class AbstractUser extends PermanentEntity {
 	 *
 	 * @return bool True if the current client is logged in
 	 */
-	public static function isLogged() {
+	public static function isLogged(): bool {
 		return !empty($_SESSION['USER_ID']);
 	}
 	
@@ -230,8 +230,8 @@ abstract class AbstractUser extends PermanentEntity {
 	 *
 	 * Get the ID of the current user or 0.
 	 */
-	public static function getLoggedUserID() {
-		return static::isLogged() ? $_SESSION['USER_ID'] : 0;
+	public static function getLoggedUserID(): int {
+		return static::isLogged() ? (int) $_SESSION['USER_ID'] : 0;
 	}
 	
 	/**
