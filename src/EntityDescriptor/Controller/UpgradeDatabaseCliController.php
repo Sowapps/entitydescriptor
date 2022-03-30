@@ -1,4 +1,7 @@
 <?php
+/**
+ * @author Florent HAZARD <f.hazard@sowapps.com>
+ */
 
 namespace Orpheus\EntityDescriptor\Controller;
 
@@ -11,11 +14,6 @@ use Orpheus\InputController\CliController\CliRequest;
 use Orpheus\InputController\CliController\CliResponse;
 use Orpheus\SqlAdapter\SqlAdapter;
 
-/**
- * Class UpgradeDatabaseCliController
- * Controller to upgrade database using cli
- *
- */
 class UpgradeDatabaseCliController extends CliController {
 	
 	/**
