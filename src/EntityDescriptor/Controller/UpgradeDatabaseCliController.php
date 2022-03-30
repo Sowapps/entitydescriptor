@@ -7,8 +7,8 @@ use Orpheus\EntityDescriptor\EntityDescriptor;
 use Orpheus\EntityDescriptor\PermanentEntity;
 use Orpheus\EntityDescriptor\SqlGenerator\SqlGeneratorMySql;
 use Orpheus\InputController\CliController\CliController;
-use Orpheus\InputController\CliController\CLIRequest;
-use Orpheus\InputController\CliController\CLIResponse;
+use Orpheus\InputController\CliController\CliRequest;
+use Orpheus\InputController\CliController\CliResponse;
 use Orpheus\SqlAdapter\SqlAdapter;
 
 /**
@@ -19,14 +19,12 @@ use Orpheus\SqlAdapter\SqlAdapter;
 class UpgradeDatabaseCliController extends CliController {
 	
 	/**
-	 * @param CLIRequest $request The input CLI request
-	 * @return CLIResponse
+	 * @param CliRequest $request The input CLI request
+	 * @return CliResponse
 	 * @throws Exception
 	 */
-	public function run($request): CLIResponse {
-		
+	public function run($request): CliResponse {
 		$generator = new SqlGeneratorMySql();
-		
 		$query = '';
 		/** @var PermanentEntity $entityClass */
 		foreach( PermanentEntity::listKnownEntities() as $entityClass ) {
@@ -38,7 +36,7 @@ class UpgradeDatabaseCliController extends CliController {
 		}
 		
 		if( !$query ) {
-			return new CLIResponse(0, 'No changes');
+			return new CliResponse(0, 'No changes');
 		}
 		
 		$this->printLine(sprintf("Available changes:
@@ -47,7 +45,7 @@ class UpgradeDatabaseCliController extends CliController {
 		$answer = $this->requestInputLine('Do you want to apply changes ? [Y/n] ', false);
 		
 		if( $answer && strtolower($answer) !== 'y' ) {
-			return new CLIResponse(0, 'Aborting changes');
+			return new CliResponse(0, 'Aborting changes');
 		}
 		echo 'Applying changes... ';
 		
@@ -56,7 +54,7 @@ class UpgradeDatabaseCliController extends CliController {
 		
 		$this->printLine('Done!');
 		
-		return new CLIResponse(0, 'All changes were applied.');
+		return new CliResponse(0, 'All changes were applied.');
 	}
 	
 	
