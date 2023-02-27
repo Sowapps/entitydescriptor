@@ -83,7 +83,11 @@ abstract class PermanentEntity extends PermanentObject {
 	}
 	
 	public function getLabel(): string {
-		return static::getClass() . '#' . $this->{static::$ID_FIELD};
+		return $this->getReference();
+	}
+	
+	public function getReference(): string {
+		return static::getClass() . '#' . $this->id();
 	}
 	
 	public function __toString() {
