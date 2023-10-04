@@ -1,40 +1,44 @@
 {
-  "name": "orpheus/orpheus-entitydescriptor",
-  "description": "Orpheus Entity Descriptor",
-  "type": "library",
-  "license": "MIT",
-  "authors": [
-	{
-	  "name": "Florent HAZARD (Sowapps)",
-	  "email": "contact@sowapps.com",
-	  "homepage": "http://sowapps.com",
-	  "role": "Developer"
-	}
-  ],
-  "keywords": [
-	"orpheus",
-	"entity",
-	"database",
-	"persistent",
-	"object"
-  ],
-  "autoload": {
-	"psr-4": {
-	  "Orpheus\\": "src"
+	"name": "orpheus/orpheus-entitydescriptor",
+	"description": "Orpheus Entity Descriptor",
+	"type": "orpheus-library",
+	"license": "MIT",
+	"keywords": [
+		"orpheus",
+		"orm",
+		"entity",
+		"database",
+		"persistent",
+		"object"
+	],
+	"autoload": {
+		"psr-4": {
+			"Orpheus\\": "src/"
+		},
+		"files": [
+			"src/_loader.php"
+		]
 	},
-	"files": [
-	  "src/_loader.php"
+	"require": {
+		"orpheus/orpheus-core": "^4.0.0",
+		"orpheus/orpheus-cache": "^4.0.0",
+		"orpheus/orpheus-yaml": "^4.0.0",
+		"orpheus/orpheus-sqladapter": "^4.0.0",
+		"orpheus/orpheus-inputcontroller": "^4.0.0",
+		"orpheus/orpheus-publisher": "^4.0.0",
+		"orpheus/orpheus-webtools": "^4.0.0"
+	},
+	"extra": {
+		"orpheus-library": {
+			"class": "Orpheus\\EntityDescriptor\\OrpheusEntityDescriptorLibrary"
+		}
+	},
+	"authors": [
+		{
+			"name": "Florent HAZARD (Sowapps)",
+			"email": "contact@sowapps.com",
+			"homepage": "https://sowapps.com",
+			"role": "Developer"
+		}
 	]
-  },
-  "require": {
-	"orpheus/orpheus-core": "1.*",
-	"orpheus/orpheus-hook": "1.*",
-	"orpheus/orpheus-cache": "1.*",
-	"orpheus/orpheus-yaml": "1.*",
-	"orpheus/orpheus-sqladapter": "1.*",
-	"orpheus/orpheus-rendering": "1.*",
-	"orpheus/orpheus-inputcontroller": "1.*",
-	"orpheus/orpheus-publisher": "1.*",
-	"orpheus/orpheus-webtools": "1.*"
-  }
 }

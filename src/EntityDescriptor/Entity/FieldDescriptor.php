@@ -3,8 +3,9 @@
  * FieldDescriptor
  */
 
-namespace Orpheus\EntityDescriptor;
+namespace Orpheus\EntityDescriptor\Entity;
 
+use Exception;
 use stdClass;
 
 /**
@@ -20,52 +21,52 @@ class FieldDescriptor {
 	 *
 	 * @var string
 	 */
-	public $name;
+	public string $name;
 	
 	/**
 	 * The field type
 	 *
 	 * @var string
 	 */
-	public $type;
+	public string $type;
 	
 	/**
 	 * The field arguments
 	 *
-	 * @var stdClass
+	 * @var object
 	 */
-	public $args;
+	public object $args;
 	
 	/**
 	 * The field's default value
 	 *
 	 * @var mixed
 	 */
-	public $default;
+	public mixed $default;
 	
 	/**
 	 * Is this field writable ?
 	 *
 	 * @var boolean
 	 */
-	public $writable;
+	public bool $writable = false;
 	
 	/**
 	 * Is this field nullable ?
 	 *
 	 * @var boolean
 	 */
-	public $nullable;
+	public bool $nullable = false;
 	
 	/**
 	 * Constructor
-	 *
-	 * @param string $name
-	 * @param string $type
 	 */
-	public function __construct($name, $type) {
+	public function __construct(string $name, string $type, array $rawArgs, mixed $default) {
 		$this->name = $name;
 		$this->type = $type;
+		$fieldType = $this->getType();
+		$this->args = $fieldType->parseArgs($rawArgs);
+		$this->default = $default;
 	}
 	
 	/**
@@ -80,38 +81,34 @@ class FieldDescriptor {
 	/**
 	 * Get arg value for this field
 	 *
-	 * @param    $key string The argument key
-	 * @return    string|integer|NULL The argument value
+	 * @param string $key The argument key
+	 * @return string|int|NULL The argument value
 	 */
-	public function arg($key) {
-		return isset($this->args->$key) ? $this->args->$key : null;
+	public function arg(string $key): int|string|null {
+		return $this->args->$key ?? null;
 	}
 	
 	/**
 	 * Get the HTML input tag for this field
 	 *
-	 * @return string
+	 * @return string[]
+	 * @throws Exception
 	 */
-	public function getHTMLInputAttr() {
-		return $this->getType()->getHTMLInputAttr($this);
+	public function getHtmlInputAttr(): array {
+		return $this->getType()->getHtmlInputAttr($this);
 	}
 	
 	/**
 	 * Get the type of the field
-	 *
-	 * @param TypeDescriptor $type Optional output parameter for the type
-	 * @return TypeDescriptor
 	 */
-	public function getType(&$type = null) {
-		return EntityDescriptor::getType($this->type, $type);
+	public function getType(): AbstractTypeDescriptor {
+		return EntityDescriptor::getType($this->type);
 	}
 	
 	/**
 	 * Get the default value (if this field is NULL)
-	 *
-	 * @return string|integer
 	 */
-	public function getDefault() {
+	public function getDefault(): mixed {
 		if( $this->default instanceof stdClass ) {
 			$this->default = call_user_func_array($this->default->type, (array) $this->default->args);
 		} elseif( is_string($this->default) && defined($this->default) ) {
@@ -123,36 +120,26 @@ class FieldDescriptor {
 	/**
 	 * Parse field type configuration from file string
 	 *
-	 * @param string $fieldName
 	 * @param string|string[] $desc
 	 * @return FieldDescriptor The parsed field descriptor
+	 * @throws Exception
 	 */
-	public static function parseType($fieldName, $desc) {
+	public static function parseType(string $fieldName, array|string $desc): FieldDescriptor {
 		if( is_array($desc) ) {
 			$typeDesc = $desc['type'];
 		} else {
 			$typeDesc = $desc;
 			$desc = [];
 		}
-		$parse = EntityDescriptor::parseType($fieldName, $typeDesc);
+		$parse = EntityDescriptor::parseType($typeDesc);
 		
-		/* Field : String name, TypeDescriptor type, Array args, default, writable, nullable */
-		$field = new static($fieldName, $parse->type);
-		$TYPE = $field->getType();
-		$field->args = $TYPE->parseArgs($parse->args);
-		$field->default = $parse->default;
+		/* Field : String name, AbstractTypeDescriptor type, Array args, default, writable, nullable */
+		$field = new static($fieldName, $parse->type, $parse->args, $parse->default);
+		$fieldType = $field->getType();
 		
 		// Type's default
-		$field->writable = $TYPE->isWritable();
-		$field->nullable = $TYPE->isNullable();
-		
-		// Default if no type's default
-		if( !isset($field->writable) ) {
-			$field->writable = true;
-		}
-		if( !isset($field->nullable) ) {
-			$field->nullable = false;
-		}
+		$field->writable = $fieldType->isWritable();
+		$field->nullable = $fieldType->isNullable();
 		
 		// Field flags
 		if( isset($desc['writable']) ) {
@@ -174,17 +161,9 @@ class FieldDescriptor {
 	
 	/**
 	 * Build ID field for an entity
-	 *
-	 * @param string $name
-	 * @return static
 	 */
-	public static function buildIDField($name) {
-		$field = new static($name, 'ref');
-		$TYPE = $field->getType();
-		$field->args = $TYPE->parseArgs([]);
-		$field->default = null;
-		$field->writable = false;
-		$field->nullable = false;
-		return $field;
+	public static function buildIdField(string $name): static {
+		// Require writable & nullable to false
+		return new static($name, 'ref', [], null);
 	}
 }

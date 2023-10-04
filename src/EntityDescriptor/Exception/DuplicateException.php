@@ -5,23 +5,19 @@
 
 namespace Orpheus\EntityDescriptor\Exception;
 
+use Orpheus\EntityDescriptor\Entity\PermanentEntity;
 use Orpheus\Exception\UserException;
-use Orpheus\Publisher\PermanentObject\PermanentObject;
 
 class DuplicateException extends UserException {
 	
-	/** @var PermanentObject */
-	private $duplicate;
+	private PermanentEntity $duplicate;
 	
-	public function __construct(PermanentObject $duplicate) {
+	public function __construct(PermanentEntity $duplicate) {
 		parent::__construct('duplicateEntity', $duplicate::getDomain());
 		$this->duplicate = $duplicate;
 	}
 	
-	/**
-	 * @return PermanentObject
-	 */
-	public function getDuplicate() {
+	public function getDuplicate(): PermanentEntity {
 		return $this->duplicate;
 	}
 	

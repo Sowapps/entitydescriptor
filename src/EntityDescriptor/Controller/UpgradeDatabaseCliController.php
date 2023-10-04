@@ -6,19 +6,18 @@
 namespace Orpheus\EntityDescriptor\Controller;
 
 use Exception;
-use Orpheus\EntityDescriptor\EntityDescriptor;
-use Orpheus\EntityDescriptor\PermanentEntity;
-use Orpheus\EntityDescriptor\SqlGenerator\SqlGeneratorMySql;
+use Orpheus\EntityDescriptor\Entity\EntityDescriptor;
+use Orpheus\EntityDescriptor\Entity\PermanentEntity;
+use Orpheus\EntityDescriptor\Generator\Sql\SqlGeneratorMySql;
 use Orpheus\InputController\CliController\CliController;
 use Orpheus\InputController\CliController\CliRequest;
 use Orpheus\InputController\CliController\CliResponse;
-use Orpheus\SqlAdapter\SqlAdapter;
+use Orpheus\SqlAdapter\AbstractSqlAdapter;
 
 class UpgradeDatabaseCliController extends CliController {
 	
 	/**
 	 * @param CliRequest $request The input CLI request
-	 * @return CliResponse
 	 * @throws Exception
 	 */
 	public function run($request): CliResponse {
@@ -27,7 +26,7 @@ class UpgradeDatabaseCliController extends CliController {
 		/** @var PermanentEntity $entityClass */
 		foreach( PermanentEntity::listKnownEntities() as $entityClass ) {
 			$entityDescriptor = EntityDescriptor::load($entityClass::getTable(), $entityClass);
-			$entityQuery = strip_tags($generator->matchEntity($entityDescriptor, $entityClass::getSqlAdapter()));
+			$entityQuery = strip_tags($generator->getIncrementalChanges($entityDescriptor, $entityClass::getSqlAdapter()) ?? '');
 			if( $entityQuery ) {
 				$query .= ($query ? "\n\n" : '') . $entityQuery;
 			}
@@ -47,8 +46,8 @@ class UpgradeDatabaseCliController extends CliController {
 		}
 		echo 'Applying changes... ';
 		
-		$defaultAdapter = SqlAdapter::getInstance();
-		$defaultAdapter->query($query, PDOEXEC);
+		$defaultAdapter = AbstractSqlAdapter::getInstance();
+		$defaultAdapter->query($query, AbstractSqlAdapter::PROCESS_EXEC);
 		
 		$this->printLine('Done!');
 		

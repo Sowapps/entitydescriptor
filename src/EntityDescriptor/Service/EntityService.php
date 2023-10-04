@@ -1,16 +1,20 @@
 <?php
 
-namespace Orpheus\EntityDescriptor;
+namespace Orpheus\EntityDescriptor\Service;
 
+use Orpheus\EntityDescriptor\Entity\PermanentEntity;
 use Orpheus\Exception\NotFoundException;
 use Orpheus\Exception\UserException;
 use Orpheus\SqlRequest\SqlSelectRequest;
 use RuntimeException;
 
+/**
+ * One entity service
+ */
 class EntityService {
 	
 	/**
-	 * @var string The entity class, if not used, override the calling methods
+	 * @var class-string<PermanentEntity> The entity class, if not used, override the calling methods
 	 */
 	protected string $entityClass;
 	
@@ -26,17 +30,12 @@ class EntityService {
 	
 	/**
 	 * EntityService constructor.
-	 *
-	 * @param string $entityClass
 	 */
 	public function __construct(string $entityClass) {
 		$this->entityClass = $entityClass;
 	}
 	
-	/**
-	 * @return array
-	 */
-	public function extractPublicArray($item, $model = 'all') {
+	public function extractPublicArray(object $item, $model = 'all'): array {
 		if( method_exists($item, 'asArray') ) {
 			return $item->asArray($model);
 		}
@@ -44,40 +43,35 @@ class EntityService {
 	}
 	
 	/**
-	 * @return string
+	 * @return class-string<PermanentEntity>
 	 */
-	public function getDomain() {
-		$c = $this->getEntityClass();
-		return $c::getDomain();
-	}
-	
-	/**
-	 * @return string|PermanentEntity
-	 */
-	public function getEntityClass() {
+	public function getEntityClass(): string {
 		if( !$this->entityClass ) {
 			throw new RuntimeException('Invalid declaration of ' . get_called_class() . ', override calling methods or provide entityClass property');
 		}
 		return $this->entityClass;
 	}
 	
-	/**
-	 * @param string|int $id
-	 * @return PermanentEntity
-	 * @throws NotFoundException
-	 * @throws UserException
-	 */
-	public function loadItem($id) {
-		$c = $this->getEntityClass();
-		return $c::load($id, false);
+	public function getDomain(): string {
+		/** @var class-string<PermanentEntity> $class */
+		$class = $this->getEntityClass();
+		return $class::getDomain();
 	}
 	
 	/**
-	 * @param array $input
-	 * @param array|null $fields
-	 * @return int The new item ID
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
-	public function createItem($input, $fields = null) {
+	public function loadItem(string $id): PermanentEntity {
+		/** @var class-string<PermanentEntity> $class */
+		$class = $this->getEntityClass();
+		return $class::load($id, false);
+	}
+	
+	/**
+	 * @return string The new item ID
+	 */
+	public function createItem(array $input, ?array $fields = null): string {
 		$c = $this->getEntityClass();
 		if( $fields == null ) {
 			$fields = $this->getEditableFields($input, null);
@@ -88,19 +82,15 @@ class EntityService {
 		return call_user_func([$c, 'create'], $input, $fields);
 	}
 	
-	public function getEditableFields(array $input, ?PermanentEntity $item) {
-		return $this->fields ? $this->fields->getEditFields() : call_user_func([$this->getEntityClass(), 'getEditableFields'], $input, $item);
+	public function getEditableFields(array $input, ?PermanentEntity $item): array {
+		return !$this->fields ? call_user_func([$this->getEntityClass(), 'getEditableFields'], $input, $item) : $this->fields;
 	}
 	
-	/**
-	 * @param array|null $filter
-	 * @return SqlSelectRequest
-	 */
-	public function getSelectQuery($filter = null): SqlSelectRequest {
-		/** @var PermanentEntity $entityClass */
-		$entityClass = $this->getEntityClass();
+	public function getSelectQuery(?array $filter = null): SqlSelectRequest {
+		/** @var class-string<PermanentEntity> $class */
+		$class = $this->getEntityClass();
 		/** @var SqlSelectRequest $query */
-		$query = $entityClass::get();
+		$query = $class::requestSelect();
 		if( !empty($filter['max']) ) {
 			$query->number($filter['max']);
 			if( !empty($filter['page']) ) {
@@ -109,10 +99,10 @@ class EntityService {
 		}
 		if( !empty($filter['search']) && is_array($filter['search']) ) {
 			foreach( $filter['search'] as $searchModel => $searchValue ) {
-				if( method_exists($entityClass, 'applyFilter') ) {
-					$entityClass::applyFilter($query, $searchModel, $searchValue);
-				} elseif( method_exists($entityClass, 'formatCondition') ) {
-					$query->where($entityClass::formatCondition($searchModel, $searchValue));
+				if( method_exists($class, 'applyFilter') ) {
+					$class::applyFilter($query, $searchModel, $searchValue);
+				} elseif( method_exists($class, 'formatCondition') ) {
+					$query->where($class::formatCondition($searchModel, $searchValue));
 				} else {
 					$query->where($searchModel, 'LIKE', '%' . $searchValue . '%');
 				}
@@ -121,15 +111,15 @@ class EntityService {
 		return $query;
 	}
 	
-	public function updateItem(PermanentEntity $item, $input, $fields = null): int {
+	public function updateItem(PermanentEntity $item, array $input, ?array $fields = null): bool {
 		return $item->update($input, $fields !== null ? $fields : $this->getEditableFields($input, $item));
 	}
 	
-	public function deleteItem(PermanentEntity $item): int {
+	public function deleteItem(PermanentEntity $item): bool {
 		return $item->remove();
 	}
 	
-	public function addColumn($label, $orderKey, $valueFunction) {
+	public function addColumn(string $label, string $orderKey, callable $valueFunction): void {
 		$this->columns[] = (object) [
 			'label'         => $label,
 			'orderKey'      => $orderKey,
@@ -137,28 +127,15 @@ class EntityService {
 		];
 	}
 	
-	/**
-	 * @return array
-	 */
 	public function getColumns(): array {
 		return $this->columns;
 	}
 	
-	public function getItemLink($item) {
-		return $item->getLink();
-	}
-	
-	/**
-	 * @return array
-	 */
 	public function getFields(): array {
 		return $this->fields;
 	}
 	
-	/**
-	 * @param array $fields
-	 */
-	public function setFields(array $fields) {
+	public function setFields(array $fields): void {
 		$this->fields = $fields;
 	}
 	

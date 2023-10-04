@@ -14,24 +14,21 @@ class DateTime extends VanillaDateTime {
 	/**
 	 * Date constructor
 	 *
-	 * @param string $date SQL Date
+	 * @param string|null $date SQL Date
 	 * @throws Exception
 	 */
-	public function __construct($date = null) {
+	public function __construct(?string $date = null) {
 		static $timezone;
 		if( !$timezone ) {
 			$timezone = new DateTimeZone('UTC');
 		}
-		parent::__construct($date, $timezone);
+		parent::__construct($date ?? 'now', $timezone);
 	}
 	
 	/**
 	 * Get days to reach other date
-	 *
-	 * @param VanillaDateTime|null $otherDate
-	 * @return int
 	 */
-	public function getDaysTo(?VanillaDateTime $otherDate = null) {
+	public function getDaysTo(?VanillaDateTime $otherDate = null): int {
 		$otherDate = $otherDate ?: new VanillaDateTime();
 		return intval($this->diff($otherDate)->format('%R%a'));
 	}
@@ -39,33 +36,31 @@ class DateTime extends VanillaDateTime {
 	/**
 	 * Clone as Date
 	 *
-	 * @return Date
 	 * @throws Exception
 	 */
-	public function asDate() {
+	public function asDate(): Date {
 		return new Date(sqlDate($this));
 	}
 	
 	/**
 	 * Clone as DateTime
 	 *
-	 * @return DateTime
 	 * @throws Exception
 	 */
-	public function asDateTime() {
+	public function asDateTime(): DateTime {
 		return new DateTime(sqlDatetime($this));
 	}
 	
 	/**
 	 * Test this date is after the other one
-	 *
-	 * @param VanillaDateTime $otherDatetime
-	 * @return bool
 	 */
-	public function isAfter(VanillaDateTime $otherDatetime) {
+	public function isAfter(VanillaDateTime $otherDatetime): bool {
 		return $this->getTimestamp() > $otherDatetime->getTimestamp();
 	}
 	
+	/**
+	 * @throws Exception
+	 */
 	public function __toString() {
 		return dt($this);
 	}
