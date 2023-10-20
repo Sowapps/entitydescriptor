@@ -8,8 +8,9 @@ namespace Orpheus\Time;
 use DateTime as VanillaDateTime;
 use DateTimeZone;
 use Exception;
+use JsonSerializable;
 
-class DateTime extends VanillaDateTime {
+class DateTime extends VanillaDateTime implements JsonSerializable {
 	
 	/**
 	 * Date constructor
@@ -65,4 +66,7 @@ class DateTime extends VanillaDateTime {
 		return dt($this);
 	}
 	
+	public function jsonSerialize(): string {
+		return $this->format('c');
+	}
 }

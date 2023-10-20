@@ -6,7 +6,6 @@
 namespace Orpheus\EntityDescriptor\Controller;
 
 use Exception;
-use Orpheus\EntityDescriptor\Entity\EntityDescriptor;
 use Orpheus\EntityDescriptor\Entity\PermanentEntity;
 use Orpheus\EntityDescriptor\Generator\Sql\SqlGeneratorMySql;
 use Orpheus\InputController\CliController\CliController;
@@ -25,7 +24,7 @@ class UpgradeDatabaseCliController extends CliController {
 		$query = '';
 		/** @var PermanentEntity $entityClass */
 		foreach( PermanentEntity::listKnownEntities() as $entityClass ) {
-			$entityDescriptor = EntityDescriptor::load($entityClass::getTable(), $entityClass);
+			$entityDescriptor = $entityClass::getDescriptor();
 			$entityQuery = strip_tags($generator->getIncrementalChanges($entityDescriptor, $entityClass::getSqlAdapter()) ?? '');
 			if( $entityQuery ) {
 				$query .= ($query ? "\n\n" : '') . $entityQuery;

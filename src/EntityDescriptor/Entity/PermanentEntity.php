@@ -830,7 +830,7 @@ abstract class PermanentEntity {
 		
 		// Getting data
 		$entity = static::requestSelect()
-			->where(static::getIdField(), '=', $id)
+			->where('id', '=', $id)
 			->asObject()
 			->run();
 		if( !$entity ) {

@@ -27,6 +27,10 @@ abstract class AbstractUser extends PermanentEntity {
 	
 	protected static ?self $loggedUser = null;
 	
+	abstract function getAuthenticationToken(): string;
+	
+	abstract static function getByAuthenticationToken(string $token): ?static;
+	
 	/**
 	 * Magic string conversion
 	 *
@@ -166,7 +170,7 @@ abstract class AbstractUser extends PermanentEntity {
 		if( !static::isLogged() ) {
 			return null;
 		}
-		$userId = static::getLoggedUserID();
+		$userId = static::getLoggedUserId();
 		if( !static::$loggedUser || static::$loggedUser->id() != $userId ) {
 			// Non-connected or session has a different user
 			/** @var class-string<AbstractUser> $userClass */
@@ -196,11 +200,14 @@ abstract class AbstractUser extends PermanentEntity {
 	 * Get ID if user is logged
 	 *
 	 * @return string The id of the current client logged in
-	 *
-	 * Get the ID of the current user or 0.
+	 * @TODO Update using security service
 	 */
-	public static function getLoggedUserID(): int {
-		return static::isLogged() ? (int) $_SESSION['USER_ID'] : 0;
+	public static function getLoggedUserId(): ?int {
+		return static::isLogged() ? $_SESSION['USER_ID'] : null;
+	}
+	
+	public static function requireAuthenticatedUserId(): int {
+		return self::getLoggedUserId() || static::throwNotFound();
 	}
 	
 	/**
