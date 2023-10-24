@@ -6,6 +6,7 @@
 namespace Orpheus\EntityDescriptor;
 
 use Orpheus\Core\AbstractOrpheusLibrary;
+use Orpheus\Core\Route;
 use Orpheus\EntityDescriptor\Entity\EntityDescriptor;
 use Orpheus\EntityDescriptor\Type\TypeBoolean;
 use Orpheus\EntityDescriptor\Type\TypeCity;
@@ -70,12 +71,12 @@ class OrpheusEntityDescriptorLibrary extends AbstractOrpheusLibrary {
 		// TODO: Improve HttpRoute::registerAccessRestriction
 		// Require orpheus-inputcontroller for this feature
 		// Maybe we could let the core manager the access restrictions
-		HttpRoute::registerAccessRestriction('role', function (string $route, string $options) {
+		HttpRoute::registerAccessRestriction('role', function (Route $route, string $options) {
 			//	if( !is_string($options) ) {
 			//		throw new Exception('Invalid route access restriction option in routes config, allow string only');
 			//	}
 			
-			return AbstractUser::loggedCanAccessToRoute($route, $options);
+			return AbstractUser::loggedCanAccessToRoute($route->getName(), $options);
 		});
 	}
 	

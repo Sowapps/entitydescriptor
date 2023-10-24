@@ -3,6 +3,7 @@
 namespace Orpheus\EntityDescriptor\Service;
 
 use Orpheus\EntityDescriptor\Entity\PermanentEntity;
+use Orpheus\EntityDescriptor\User\AbstractUser;
 use Orpheus\Exception\NotFoundException;
 use Orpheus\Exception\UserException;
 use Orpheus\SqlRequest\SqlSelectRequest;
@@ -35,7 +36,14 @@ class EntityService {
 		$this->entityClass = $entityClass;
 	}
 	
-	public function extractPublicArray(object $item, $model = 'all'): array {
+	public function getOwner(PermanentEntity $entity): ?AbstractUser {
+		$userId = $entity->getValue('owner_id') || $entity->getValue('create_user_id');
+		/** @var AbstractUser $userClass */
+		$userClass = AbstractUser::getUserClass();
+		return $userId ? $userClass::load($userId) : null;
+	}
+	
+	public function extractPublicArray(object $item, string $model = 'all'): array {
 		if( method_exists($item, 'asArray') ) {
 			return $item->asArray($model);
 		}

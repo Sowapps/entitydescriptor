@@ -35,6 +35,7 @@ use RuntimeException;
 abstract class PermanentEntity {
 	
 	const OUTPUT_MODEL_MINIMALS = 'min';
+	const OUTPUT_MODEL_PUBLIC = 'public';
 	const OUTPUT_MODEL_ALL = 'all';
 	
 	/**
@@ -192,7 +193,7 @@ abstract class PermanentEntity {
 	 * @param string|null $key Name of the field to get.
 	 */
 	public function getValue(?string $key = null): mixed {
-		if( empty($key) ) {
+		if( !$key ) {
 			return $this->data;
 		}
 		if( !array_key_exists($key, $this->data) ) {
