@@ -294,9 +294,9 @@ abstract class AbstractUser extends PermanentEntity {
 			return;//Nothing to check. Email is mandatory.
 		}
 		$where = 'email LIKE ' . static::formatValue($data['email']);
-		$what = 'email';
+		$what = ['email'];
 		if( !empty($data['name']) ) {
-			$what .= ', name';
+			$what[] = 'name';
 			$where .= ' OR name LIKE ' . static::formatValue($data['name']);
 		}
 		$query = static::get()
