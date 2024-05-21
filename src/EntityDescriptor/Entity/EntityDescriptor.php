@@ -12,6 +12,7 @@ use Orpheus\Config\Yaml\Yaml;
 use Orpheus\EntityDescriptor\Exception\InvalidTypeFormat;
 use Orpheus\Exception\UserException;
 use Orpheus\Publisher\Exception\InvalidFieldException;
+use Orpheus\Publisher\Validation\Validation;
 use RuntimeException;
 
 /**
@@ -158,10 +159,7 @@ class EntityDescriptor {
 		return array_keys($this->fields);
 	}
 	
-	/**
-	 * Validate input
-	 */
-	public function validate(array &$input, ?array $fields = null, ?PermanentEntity $ref = null, int &$errCount = 0, bool|array $ignoreRequired = false): array {
+	public function validate(Validation $validation, array &$input, ?array $fields = null, ?PermanentEntity $ref = null, bool|array $ignoreRequired = false): array {
 		$data = [];
 		foreach( $this->fields as $fieldName => $fieldData ) {
 			try {
@@ -183,11 +181,13 @@ class EntityDescriptor {
 					$data[$fieldName] = $value;
 				}
 				
-			} catch( UserException $e ) {
-				if( ($e instanceof InvalidFieldException && $e->getKey() === 'requiredField') && ($ignoreRequired === true || (is_array($ignoreRequired) && in_array($fieldName, $ignoreRequired))) ) {
+			} catch( UserException $exception ) {
+				if( ($exception instanceof InvalidFieldException && $exception->getKey() === 'requiredField') && ($ignoreRequired === true || (is_array($ignoreRequired) && in_array($fieldName, $ignoreRequired))) ) {
 					continue;
 				}
-				$errCount++;
+				$validation->addError($exception);
+//				$errCount++;
+
 //				if( isset($this->class) ) {
 //					/** @var PermanentEntity $class */
 //					$class = $this->class;

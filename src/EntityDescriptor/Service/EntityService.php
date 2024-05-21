@@ -37,7 +37,7 @@ class EntityService {
 	}
 	
 	public function getOwner(PermanentEntity $entity): ?AbstractUser {
-		$userId = $entity->getValue('owner_id') || $entity->getValue('create_user_id');
+		$userId = $entity->getValue('owner_id') ?: $entity->getValue('create_user_id');
 		/** @var AbstractUser $userClass */
 		$userClass = AbstractUser::getUserClass();
 		return $userId ? $userClass::load($userId) : null;

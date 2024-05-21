@@ -12,13 +12,14 @@ namespace Orpheus\EntityDescriptor\Entity;
 use DateTimeInterface;
 use Exception;
 use Orpheus\Cache\CacheException;
-use Orpheus\EntityDescriptor\Exception\DuplicateException;
 use Orpheus\Exception\NotFoundException;
 use Orpheus\Exception\UserException;
+use Orpheus\Exception\UserReportsException;
 use Orpheus\Publisher\Exception\FieldNotFoundException;
 use Orpheus\Publisher\Transaction\CreateTransactionOperation;
 use Orpheus\Publisher\Transaction\DeleteTransactionOperation;
 use Orpheus\Publisher\Transaction\UpdateTransactionOperation;
+use Orpheus\Publisher\Validation\Validation;
 use Orpheus\SqlAdapter\AbstractSqlAdapter;
 use Orpheus\SqlAdapter\Exception\SqlException;
 use Orpheus\SqlRequest\SqlInsertRequest;
@@ -307,13 +308,19 @@ abstract class PermanentEntity {
 	 *
 	 * @param array $input The input data we will check and extract, used by children
 	 * @param string[] $fields The array of fields to check
-	 * @param int &$errCount Output parameter for the number of occurred errors validating fields.
+	 * @param Validation|null $validation The validation
 	 */
-	public function update(array $input, array $fields, int &$errCount = 0): bool {
+	public function update(array $input, array $fields, ?Validation $validation = null): bool {
+		$validation ??= new Validation();
 		$operation = $this->getUpdateOperation($input, $fields);
-		$operation->validate($errCount);
+		$validation->merge($operation->validate());
 		
-		return $operation->runIfValid();
+		if( !$validation->isValid() ) {
+			// Includes previous validation to reject creation in all cases
+			throw new UserReportsException($validation->getReports(), 'errorUpdateValidation', static::getDomain());
+		}
+		
+		return $operation->run();
 	}
 	
 	/**
@@ -434,17 +441,16 @@ abstract class PermanentEntity {
 	}
 	
 	/**
-	 * What do you think it does ?
+	 * Remove this permanent entity
 	 */
 	public function remove(): bool {
 		if( $this->isDeleted() ) {
 			return true;
 		}
 		$operation = $this->getDeleteOperation();
-		$errors = 0;
-		$operation->validate($errors);
+		$validation = $operation->validate();
 		
-		return $operation->runIfValid();
+		return $validation->isValid() && $operation->run();
 	}
 	
 	/**
@@ -915,7 +921,7 @@ abstract class PermanentEntity {
 	/**
 	 * Callback when validating update
 	 */
-	public static function onValidUpdate(array &$input, int $newErrors): bool {
+	public static function onValidUpdate(array &$input, Validation $validation): bool {
 		if( $input ) {
 			static::fillLogEvent($input, 'edit');
 			static::fillLogEvent($input, 'update');
@@ -1018,7 +1024,7 @@ abstract class PermanentEntity {
 	/**
 	 * Callback when validating create
 	 */
-	public static function onValidCreate(array &$input, int &$newErrors): bool {
+	public static function onValidCreate(array &$input, Validation $validation): bool {
 		static::fillLogEvent($input, 'create');
 		static::fillLogEvent($input, 'edit');
 		
@@ -1028,8 +1034,12 @@ abstract class PermanentEntity {
 	/**
 	 * Callback when validating create
 	 */
-	public static function onValidEdit(array $input, ?PermanentEntity $object, int &$newErrors): bool {
-		static::verifyConflicts($input, $object);
+	public static function onValidEdit(array $input, ?PermanentEntity $object, Validation $validation): bool {
+		try {
+			static::verifyConflicts($input, $object);
+		} catch( UserException $exception ) {
+			$validation->addError($exception);
+		}
 		
 		return true;
 	}
@@ -1039,7 +1049,7 @@ abstract class PermanentEntity {
 	 *
 	 * @param array $input The input data we will check, extract and create the new object.
 	 * @param array|null $fields The array of fields to check. Default value is null.
-	 * @param int $errCount Output parameter to get the number of found errors. Default value is 0
+	 * @param Validation|null $validation The validation
 	 * @return static The new permanent object
 	 * @see testUserInput()
 	 * @see create()
@@ -1047,8 +1057,8 @@ abstract class PermanentEntity {
 	 * Create a new permanent object from ths input data.
 	 * To create an object, we expect that it is valid, else we throw an exception.
 	 */
-	public static function createAndGet(array $input = [], ?array $fields = null, int &$errCount = 0): static {
-		return static::load(static::create($input, $fields, $errCount));
+	public static function createAndGet(array $input = [], ?array $fields = null, ?Validation $validation = null): static {
+		return static::load(static::create($input, $fields, $validation));
 	}
 	
 	/**
@@ -1057,18 +1067,18 @@ abstract class PermanentEntity {
 	 *
 	 * @param array $input The input data we will check, extract and create the new object.
 	 * @param array|null $fields The array of fields to check. Default value is null.
-	 * @param int $errCount Output parameter to get the number of found errors. Default value is 0
+	 * @param Validation|null $validation The validation
 	 * @return int The ID of the new permanent object.
 	 * @see testUserInput()
 	 * @see createAndGet()
 	 */
-	public static function create(array $input = [], ?array $fields = null, int &$errCount = 0): int {
-		// TODO Replace error count and result by OperationResult (success, errors, result)
-		// TODO Implement OperationResult
+	public static function create(array $input = [], ?array $fields = null, ?Validation $validation = null): int {
+		$validation ??= new Validation();
 		$operation = static::getCreateOperation($input, $fields);
-		$operation->validate($errCount);
-		if( !$operation->isValid() ) {
-			static::throwException('errorCreateChecking');
+		$validation->merge($operation->validate());
+		if( !$validation->isValid() ) {
+			// Includes previous validation to reject creation in all cases
+			throw new UserReportsException($validation->getReports(), 'errorCreateValidation', static::getDomain());
 		}
 		
 		return $operation->run();
@@ -1087,33 +1097,19 @@ abstract class PermanentEntity {
 		return $operation;
 	}
 	
-	/**
-	 * Test user input
-	 *
-	 * @param array $input The new data to process.
-	 * @param array|null $fields The array of fields to check. Default value is null.
-	 * @param PermanentEntity|null $ref The referenced object (update only). Default value is null.
-	 * @param int $errCount The resulting error count, as pointer. Output parameter.
-	 * @param array|bool $ignoreRequired
-	 * @throws DuplicateException
-	 * @see create()
-	 * @see checkUserInput()
-	 */
-	public static function testUserInput(array $input, ?array $fields = null, PermanentEntity $ref = null, int &$errCount = 0, bool $ignoreRequired = false): bool {
-		$data = static::checkUserInput($input, $fields, $ref, $errCount, $ignoreRequired);
+	public static function testUserInput(array $input, ?array $fields = null, PermanentEntity $ref = null, int &$errCount = 0, bool $ignoreRequired = false): Validation {
+		$validation = new Validation();
+		$data = static::validateInput($validation, $input, $fields, $ref, $ignoreRequired);
 		if( $errCount ) {
-			return false;
+			return $validation;
 		}
 		try {
 			static::verifyConflicts($data, $ref);
-		} catch( UserException $e ) {
-			$errCount++;
-			reportError($e, static::getDomain());
-			
-			return false;
+		} catch( UserException $exception ) {
+			$validation->addError($exception);
 		}
 		
-		return true;
+		return $validation;
 	}
 	
 	/**
@@ -1126,15 +1122,14 @@ abstract class PermanentEntity {
 	 * @param array $input The user input data to check.
 	 * @param string[]|null $fields The array of fields to check. Default value is null.
 	 * @param PermanentEntity|null $ref The referenced object (update only). Default value is null.
-	 * @param int $errCount The resulting error count, as pointer. Output parameter.
 	 * @return array The valid data.
 	 */
-	public static function checkUserInput(array $input, ?array $fields = null, ?PermanentEntity $ref = null, int &$errCount = 0, bool $ignoreRequired = false): array {
+	public static function validateInput(Validation $validation, array $input, ?array $fields = null, ?PermanentEntity $ref = null, bool $ignoreRequired = false): array {
 		$descriptor = static::getDescriptor();
 		
-		$data = $descriptor->validate($input, $fields, $ref, $errCount, $ignoreRequired);
+		$data = $descriptor->validate($validation, $input, $fields, $ref, $ignoreRequired);
 		if( !$data ) {
-			static::throwException($ref ? 'update.noChange' : 'create.emptyInput');
+			$validation->addError($ref ? 'update.noChange' : 'create.emptyInput', static::getDomain());
 		}
 		
 		return $data;
